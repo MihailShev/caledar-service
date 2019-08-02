@@ -1,4 +1,4 @@
-module calendar
+module github.com/MihailShev/caledar-service
 
 go 1.12
 
