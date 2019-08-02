@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package calendar;
+
+message Event {
+    string name = 1;
+    string description = 2;
+    int64 start = 3;
+    int64 end = 4;
+    uint32 id = 5;
+}
+
+message EventList {
+    repeated Event events = 1;
+}
+
