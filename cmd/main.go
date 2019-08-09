@@ -1,11 +1,20 @@
 package main
 
 import (
-	"calendar/calendar"
-	"fmt"
+	"github.com/MihailShev/caledar-service/controller"
+	"github.com/gin-gonic/gin"
+	"log"
 )
 
 func main() {
-	e := calendar.Event{Name:"Событие"}
-	fmt.Println(e.String())
+
+	router := gin.Default()
+	router.POST("/add", controller.AddEvent)
+	router.PUT("/update")
+
+	err := router.Run()
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }

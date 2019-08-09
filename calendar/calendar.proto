@@ -2,15 +2,15 @@ syntax = "proto3";
 
 package calendar;
 
-message Event {
-    string name = 1;
-    string description = 2;
-    int64 start = 3;
-    int64 end = 4;
-    uint32 id = 5;
-}
+import "google/protobuf/timestamp.proto";
 
-message EventList {
-    repeated Event events = 1;
+message Event {
+    string UUID = 1;
+    string title = 2;
+    google.protobuf.Timestamp start = 3;
+    google.protobuf.Timestamp end = 4;
+    string description = 5;
+    uint64 userId = 6;
+    uint32 noticeTime = 7;
 }
 
