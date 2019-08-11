@@ -18,41 +18,17 @@ const (
 	contentType = "application/protobuf"
 )
 
-func TestAdd(t *testing.T) {
+func TestAddEvent(t *testing.T) {
 
 	event := createEvent()
-	got := calendar.Event{}
-
-	message, err := proto.Marshal(event)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	resp, err := http.Post(fmt.Sprintf("%s%s", url, "add"), contentType, bytes.NewBuffer(message))
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	data, err := ioutil.ReadAll(resp.Body)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = proto.Unmarshal(data, &got)
-
-	if err != nil {
-		log.Fatal(err)
-	}
+	got := postEvent(event)
 
 	if event.UUID != uint64(0) {
 		t.Error("Expected UUID is not equal 0, but got UUID:", got.UUID)
 	}
 
 	if got.Title != event.Title || got.Start.Seconds != event.Start.Seconds || got.End.Seconds != event.End.Seconds {
-		t.Error("Add event, some fields is not equal expected:", *event, "got:", got)
+		t.Error("Add event - some fields is not equal expected:", *event, "got:", got)
 	}
 }
 
@@ -60,9 +36,20 @@ func TestGetEvent(t *testing.T) {
 	expected := postEvent(createEvent())
 
 	got := getEvent(expected.UUID)
-	fmt.Println("got", got)
+
 	if expected.UUID != got.UUID {
-		t.Error("Get event, expected:", expected, "got:", got)
+		t.Error("Get event - expected:", expected, "got:", got)
+	}
+}
+
+func TestUpdateEvent(t *testing.T) {
+	event := postEvent(createEvent())
+	expDescription := "Updated description"
+
+	updatedEvent := updateEvent(event.UUID, &calendar.Event{Description: expDescription})
+
+	if expDescription != updatedEvent.Description {
+		t.Error("Expected updated description:", event.Description, "got:", updatedEvent.Description)
 	}
 }
 
@@ -118,7 +105,7 @@ func postEvent(e *calendar.Event) *calendar.Event {
 		log.Fatal(err)
 	}
 
-	resp, err := http.Post(fmt.Sprintf("%s%s", url, "add"), contentType, bytes.NewBuffer(message))
+	resp, err := http.Post(url, contentType, bytes.NewBuffer(message))
 
 	if err != nil {
 		log.Fatal(err)
@@ -133,6 +120,39 @@ func postEvent(e *calendar.Event) *calendar.Event {
 	event := &calendar.Event{}
 
 	err = proto.Unmarshal(data, event)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return event
+}
+
+func updateEvent(uuid uint64, putBody *calendar.Event) *calendar.Event {
+	message, err := proto.Marshal(putBody)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	resp, err := http.Post(fmt.Sprintf("%s%d", url, uuid), contentType, bytes.NewBuffer(message))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	data, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	event := &calendar.Event{}
+	err = proto.Unmarshal(data, event)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return event
 }

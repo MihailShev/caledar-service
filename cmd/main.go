@@ -10,8 +10,8 @@ func main() {
 
 	router := gin.Default()
 	router.GET("/:uuid", controller.GetHandler)
-	router.POST("/add", controller.AddHandler)
-	router.PUT("/update", controller.UpdateHandler)
+	router.POST("/:uuid", controller.UpdateHandler)
+	router.POST("/", controller.AddHandler)
 
 	err := router.Run()
 

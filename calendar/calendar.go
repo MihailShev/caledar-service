@@ -6,6 +6,7 @@ import (
 )
 
 //go:generate protoc --go_out=. calendar.proto
+
 var counter = uint64(0)
 
 type Calendar struct {
