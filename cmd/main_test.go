@@ -47,8 +47,6 @@ func TestAdd(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	fmt.Println(got.End, event.End, got.End.Seconds == event.End.Seconds)
-
 	if event.UUID != uint64(0) {
 		t.Error("Expected UUID is not equal 0, but got UUID:", got.UUID)
 	}
@@ -59,11 +57,18 @@ func TestAdd(t *testing.T) {
 }
 
 func TestGetEvent(t *testing.T) {
+	expected := postEvent(createEvent())
 
+	got := getEvent(expected.UUID)
+	fmt.Println("got", got)
+	if expected.UUID != got.UUID {
+		t.Error("Get event, expected:", expected, "got:", got)
+	}
 }
 
 func createEvent() *calendar.Event {
 	now := time.Now()
+
 	start := &timestamp.Timestamp{
 		Seconds: now.Unix(),
 	}
@@ -80,4 +85,54 @@ func createEvent() *calendar.Event {
 		UserId:      1,
 		NoticeTime:  5,
 	}
+}
+
+func getEvent(uuid uint64) *calendar.Event {
+	resp, err := http.Get(fmt.Sprintf("%s%d", url, uuid))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	data, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	event := &calendar.Event{}
+
+	err = proto.Unmarshal(data, event)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return event
+}
+
+func postEvent(e *calendar.Event) *calendar.Event {
+	message, err := proto.Marshal(e)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	resp, err := http.Post(fmt.Sprintf("%s%s", url, "add"), contentType, bytes.NewBuffer(message))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	data, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	event := &calendar.Event{}
+
+	err = proto.Unmarshal(data, event)
+
+	return event
 }

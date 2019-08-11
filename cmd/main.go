@@ -11,7 +11,7 @@ func main() {
 	router := gin.Default()
 	router.GET("/:uuid", controller.GetHandler)
 	router.POST("/add", controller.AddHandler)
-	router.PUT("/update")
+	router.PUT("/update", controller.UpdateHandler)
 
 	err := router.Run()
 
