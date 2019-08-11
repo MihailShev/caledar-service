@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/MihailShev/caledar-service/calendar"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/protobuf/proto"
@@ -8,9 +9,9 @@ import (
 	"net/http"
 )
 
-var service = &calendar.Calendar{}
+var service = calendar.NewCalendar()
 
-func AddEvent(c *gin.Context) {
+func AddHandler(c *gin.Context) {
 	data, err := ioutil.ReadAll(c.Request.Body)
 	var response []byte
 
@@ -25,6 +26,11 @@ func AddEvent(c *gin.Context) {
 	}
 }
 
+func GetHandler(c *gin.Context) {
+	uuid := c.Param("uuid")
+	fmt.Println("uuid", uuid)
+}
+
 func addEvent(message []byte) (response []byte, err error) {
 	event := calendar.Event{}
 
@@ -35,6 +41,7 @@ func addEvent(message []byte) (response []byte, err error) {
 	}
 
 	event = service.AddEvent(event)
+	fmt.Println("add event", event)
 	response, err = proto.Marshal(&event)
 
 	return

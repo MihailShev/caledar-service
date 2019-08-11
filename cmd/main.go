@@ -9,7 +9,8 @@ import (
 func main() {
 
 	router := gin.Default()
-	router.POST("/add", controller.AddEvent)
+	router.GET("/:uuid", controller.GetHandler)
+	router.POST("/add", controller.AddHandler)
 	router.PUT("/update")
 
 	err := router.Run()

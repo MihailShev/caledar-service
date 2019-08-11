@@ -1,24 +1,26 @@
 package calendar
 
 //go:generate protoc --go_out=. calendar.proto
-
-import (
-	uuid "github.com/satori/go.uuid"
-)
+var counter = uint64(0)
 
 type Calendar struct {
-	events map[string]Event
+	events map[uint64]Event
 }
 
 func (c *Calendar) AddEvent(event Event) Event {
-	u := uuid.NewV4()
-	event.UUID = string(u[:uuid.Size])
+	counter++
+	event.UUID = counter
 	c.events[event.UUID] = event
 
 	return event
 }
 
-func (c *Calendar) getEventById(uuid string) (e Event, ok bool) {
+func (c *Calendar) getEventById(uuid uint64) (e Event, ok bool) {
 	event, ok := c.events[uuid]
 	return event, ok
+}
+
+func NewCalendar() Calendar {
+	c := Calendar{events: make(map[uint64]Event)}
+	return c
 }
