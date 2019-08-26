@@ -47,7 +47,7 @@ func (c *Calendar) GetEventByUUID(uuid uint64) (e Event, ok bool) {
 	return event, ok
 }
 
-func (c *Calendar) ReplaceEvent(event Event) error {
+func (c *Calendar) ReplaceEvent(event Event) (Event, error) {
 	_, ok := c.events[event.UUID]
 
 	if ok {
@@ -56,8 +56,8 @@ func (c *Calendar) ReplaceEvent(event Event) error {
 		c.events[event.UUID] = event
 
 		c.lock.Unlock()
-		return nil
+		return event, nil
 	} else {
-		return errors.New(fmt.Sprintf("Event with uuid: %d not found", event.UUID))
+		return event, errors.New(fmt.Sprintf("Event with uuid: %d not found", event.UUID))
 	}
 }

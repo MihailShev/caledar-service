@@ -7,6 +7,7 @@ import "google/protobuf/timestamp.proto";
 service Calendar {
     rpc CreateEvent (CreateEventReq) returns (CreateEventRes);
     rpc GetEvent (GetEventReq) returns (GetEventRes);
+    rpc UpdateEvent (UpdateEventReq) returns (UpdateEventRes);
 }
 
 message Event {
@@ -41,6 +42,7 @@ message UpdateEventReq {
 }
 
 message UpdateEventRes {
-    Event event =1;
+    Event event = 1;
+    string error = 2;
 }
 

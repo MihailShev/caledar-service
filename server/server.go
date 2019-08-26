@@ -55,6 +55,39 @@ func (s *calendarServer) GetEvent(ctx context.Context, req *calendarpb.GetEventR
 
 }
 
+func (s *calendarServer) UpdateEvent(ctx context.Context, req *calendarpb.UpdateEventReq) (*calendarpb.UpdateEventRes, error) {
+	event := req.GetEvent()
+
+	updatedEvent, err := s.service.ReplaceEvent(calendar.Event{
+		UserId:      event.UserId,
+		Description: event.Description,
+		End:         *event.End,
+		Start:       *event.Start,
+		NoticeTime:  event.NoticeTime,
+		Title:       event.Title,
+	})
+
+	if err != nil {
+		return &calendarpb.UpdateEventRes{
+			Event: nil,
+			Error: fmt.Sprintf("Event with uuid: %d not found", req.Event.UUID),
+		}, nil
+	}
+
+	return &calendarpb.UpdateEventRes{
+		Event: &calendarpb.Event{
+			UUID:        updatedEvent.UUID,
+			Title:       updatedEvent.Title,
+			NoticeTime:  updatedEvent.NoticeTime,
+			Start:       &updatedEvent.Start,
+			End:         &updatedEvent.End,
+			Description: updatedEvent.Description,
+			UserId:      updatedEvent.UserId,
+		},
+		Error: "",
+	}, nil
+}
+
 func main() {
 	server := calendarServer{service: calendar.NewCalendar()}
 
