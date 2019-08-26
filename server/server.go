@@ -16,16 +16,9 @@ type calendarServer struct {
 }
 
 func (s *calendarServer) CreateEvent(ctx context.Context, req *calendarpb.CreateEventReq) (*calendarpb.CreateEventRes, error) {
-	event := req.GetEvent()
+	event := mapEventpbToEvent(req.GetEvent())
 
-	added := s.service.AddEvent(calendar.Event{
-		UserId:      event.UserId,
-		Description: event.Description,
-		End:         *event.End,
-		Start:       *event.Start,
-		NoticeTime:  event.NoticeTime,
-		Title:       event.Title,
-	})
+	added := s.service.AddEvent(*event)
 
 	return &calendarpb.CreateEventRes{UUID: added.UUID}, nil
 }
@@ -41,31 +34,14 @@ func (s *calendarServer) GetEvent(ctx context.Context, req *calendarpb.GetEventR
 	}
 
 	return &calendarpb.GetEventRes{
-		Event: &calendarpb.Event{
-			UUID:        event.UUID,
-			Title:       event.Title,
-			NoticeTime:  event.NoticeTime,
-			Start:       &event.Start,
-			End:         &event.End,
-			Description: event.Description,
-			UserId:      event.UserId,
-		},
+		Event: mapEventToEventpb(&event),
 		Error: "",
 	}, nil
-
 }
 
 func (s *calendarServer) UpdateEvent(ctx context.Context, req *calendarpb.UpdateEventReq) (*calendarpb.UpdateEventRes, error) {
-	event := req.GetEvent()
-
-	updatedEvent, err := s.service.ReplaceEvent(calendar.Event{
-		UserId:      event.UserId,
-		Description: event.Description,
-		End:         *event.End,
-		Start:       *event.Start,
-		NoticeTime:  event.NoticeTime,
-		Title:       event.Title,
-	})
+	event := mapEventpbToEvent(req.GetEvent())
+	updatedEvent, err := s.service.ReplaceEvent(*event)
 
 	if err != nil {
 		return &calendarpb.UpdateEventRes{
@@ -75,17 +51,32 @@ func (s *calendarServer) UpdateEvent(ctx context.Context, req *calendarpb.Update
 	}
 
 	return &calendarpb.UpdateEventRes{
-		Event: &calendarpb.Event{
-			UUID:        updatedEvent.UUID,
-			Title:       updatedEvent.Title,
-			NoticeTime:  updatedEvent.NoticeTime,
-			Start:       &updatedEvent.Start,
-			End:         &updatedEvent.End,
-			Description: updatedEvent.Description,
-			UserId:      updatedEvent.UserId,
-		},
+		Event: mapEventToEventpb(&updatedEvent),
 		Error: "",
 	}, nil
+}
+
+func mapEventpbToEvent(event *calendarpb.Event) *calendar.Event {
+	return &calendar.Event{
+		UserId:      event.UserId,
+		Description: event.Description,
+		End:         *event.End,
+		Start:       *event.Start,
+		NoticeTime:  event.NoticeTime,
+		Title:       event.Title,
+	}
+}
+
+func mapEventToEventpb(event *calendar.Event) *calendarpb.Event {
+	return &calendarpb.Event{
+		UUID:        event.UUID,
+		Title:       event.Title,
+		NoticeTime:  event.NoticeTime,
+		Start:       &event.Start,
+		End:         &event.End,
+		Description: event.Description,
+		UserId:      event.UserId,
+	}
 }
 
 func main() {
