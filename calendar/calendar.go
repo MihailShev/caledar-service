@@ -7,8 +7,6 @@ import (
 	"sync"
 )
 
-//go:generate protoc --proto_path ../calendarpb/ --go_out=plugins=grpc:../calendarpb calendar.proto
-
 type Event struct {
 	UUID        uint64
 	Title       string

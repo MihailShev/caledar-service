@@ -1,21 +1,52 @@
 package main
 
+//go:generate protoc --proto_path ../calendarpb/ --go_out=plugins=grpc:../calendarpb calendar.proto
+
 import (
 	"context"
 	"fmt"
 	"github.com/MihailShev/calendar-service/calendar"
 	"github.com/MihailShev/calendar-service/calendarpb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/reflection"
-	"log"
 	"net"
+	"os"
 )
+
+func init() {
+	grpclog.SetLoggerV2(grpclog.NewLoggerV2(os.Stdout, os.Stderr, os.Stderr))
+}
+
+func main() {
+	server := calendarServer{service: calendar.NewCalendar()}
+
+	lis, err := net.Listen("tcp", "0.0.0.0:50051")
+
+	if err != nil {
+		grpclog.Fatalf("failed to listen %v", err)
+	}
+
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(loggerInterceptor))
+	reflection.Register(grpcServer)
+
+	calendarpb.RegisterCalendarServer(grpcServer, &server)
+
+	grpclog.Infof("GRPC listen 0.0.0.0:50051")
+	err = grpcServer.Serve(lis)
+
+	if err != nil {
+		grpclog.Fatal(err)
+	}
+}
 
 type calendarServer struct {
 	service calendar.Calendar
 }
 
-func (s *calendarServer) CreateEvent(ctx context.Context, req *calendarpb.CreateEventReq) (*calendarpb.CreateEventRes, error) {
+func (s *calendarServer) CreateEvent(ctx context.Context,
+	req *calendarpb.CreateEventReq) (*calendarpb.CreateEventRes, error) {
+
 	event := mapEventpbToEvent(req.GetEvent())
 
 	added := s.service.AddEvent(*event)
@@ -23,7 +54,9 @@ func (s *calendarServer) CreateEvent(ctx context.Context, req *calendarpb.Create
 	return &calendarpb.CreateEventRes{UUID: added.UUID}, nil
 }
 
-func (s *calendarServer) GetEvent(ctx context.Context, req *calendarpb.GetEventReq) (*calendarpb.GetEventRes, error) {
+func (s *calendarServer) GetEvent(ctx context.Context,
+	req *calendarpb.GetEventReq) (*calendarpb.GetEventRes, error) {
+
 	event, ok := s.service.GetEventByUUID(req.GetUUID())
 
 	if !ok {
@@ -39,8 +72,11 @@ func (s *calendarServer) GetEvent(ctx context.Context, req *calendarpb.GetEventR
 	}, nil
 }
 
-func (s *calendarServer) UpdateEvent(ctx context.Context, req *calendarpb.UpdateEventReq) (*calendarpb.UpdateEventRes, error) {
+func (s *calendarServer) UpdateEvent(ctx context.Context,
+	req *calendarpb.UpdateEventReq) (*calendarpb.UpdateEventRes, error) {
+
 	event := mapEventpbToEvent(req.GetEvent())
+
 	updatedEvent, err := s.service.ReplaceEvent(*event)
 
 	if err != nil {
@@ -58,6 +94,7 @@ func (s *calendarServer) UpdateEvent(ctx context.Context, req *calendarpb.Update
 
 func mapEventpbToEvent(event *calendarpb.Event) *calendar.Event {
 	return &calendar.Event{
+		UUID:        event.UUID,
 		UserId:      event.UserId,
 		Description: event.Description,
 		End:         *event.End,
@@ -77,20 +114,4 @@ func mapEventToEventpb(event *calendar.Event) *calendarpb.Event {
 		Description: event.Description,
 		UserId:      event.UserId,
 	}
-}
-
-func main() {
-	server := calendarServer{service: calendar.NewCalendar()}
-
-	lis, err := net.Listen("tcp", "0.0.0.0:50051")
-
-	if err != nil {
-		log.Fatalf("failed to listen %v", err)
-	}
-
-	grpcServer := grpc.NewServer()
-	reflection.Register(grpcServer)
-
-	calendarpb.RegisterCalendarServer(grpcServer, &server)
-	grpcServer.Serve(lis)
 }
