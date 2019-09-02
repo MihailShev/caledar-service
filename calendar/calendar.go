@@ -3,25 +3,39 @@ package calendar
 import (
 	"errors"
 	"fmt"
+	"github.com/golang/protobuf/ptypes/timestamp"
+	"sync"
 )
 
-//go:generate protoc --go_out=. calendar.proto
-
-var counter = uint64(0)
+type Event struct {
+	UUID        uint64
+	Title       string
+	Start       timestamp.Timestamp
+	End         timestamp.Timestamp
+	Description string
+	UserId      uint64
+	NoticeTime  uint32
+}
 
 type Calendar struct {
-	events map[uint64]Event
+	lock    sync.Mutex
+	events  map[uint64]Event
+	counter uint64
 }
 
 func NewCalendar() Calendar {
-	c := Calendar{events: make(map[uint64]Event)}
+	c := Calendar{events: make(map[uint64]Event), counter: 0, lock: sync.Mutex{}}
 	return c
 }
 
 func (c *Calendar) AddEvent(event Event) Event {
-	counter++
-	event.UUID = counter
+	c.lock.Lock()
+
+	c.counter++
+	event.UUID = c.counter
 	c.events[event.UUID] = event
+
+	c.lock.Unlock()
 
 	return event
 }
@@ -31,13 +45,17 @@ func (c *Calendar) GetEventByUUID(uuid uint64) (e Event, ok bool) {
 	return event, ok
 }
 
-func (c *Calendar) ReplaceEvent(event Event) error {
+func (c *Calendar) ReplaceEvent(event Event) (Event, error) {
 	_, ok := c.events[event.UUID]
 
 	if ok {
+		c.lock.Lock()
+
 		c.events[event.UUID] = event
-		return nil
+
+		c.lock.Unlock()
+		return event, nil
 	} else {
-		return errors.New(fmt.Sprintf("Event with uuid: %d not found", event.UUID))
+		return event, errors.New(fmt.Sprintf("Event with uuid: %d not found", event.UUID))
 	}
 }
