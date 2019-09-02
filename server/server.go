@@ -1,6 +1,6 @@
-package main
-
 //go:generate protoc --proto_path ../calendarpb/ --go_out=plugins=grpc:../calendarpb calendar.proto
+
+package main
 
 import (
 	"context"
