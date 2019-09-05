@@ -1,13 +1,3 @@
-# github.com/MihailShev/caledar-service v0.0.0-20190811175605-50e2ea5d7c3b
-github.com/MihailShev/caledar-service/controller
-github.com/MihailShev/caledar-service/calendar
-# github.com/gin-contrib/sse v0.0.0-20190301062529-5545eab6dad3
-github.com/gin-contrib/sse
-# github.com/gin-gonic/gin v1.4.0
-github.com/gin-gonic/gin
-github.com/gin-gonic/gin/binding
-github.com/gin-gonic/gin/internal/json
-github.com/gin-gonic/gin/render
 # github.com/golang/protobuf v1.3.2
 github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/proto
@@ -15,16 +5,21 @@ github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/protoc-gen-go/descriptor
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
-# github.com/json-iterator/go v1.1.6
-github.com/json-iterator/go
-# github.com/mattn/go-isatty v0.0.7
-github.com/mattn/go-isatty
-# github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
-github.com/modern-go/concurrent
-# github.com/modern-go/reflect2 v1.0.1
-github.com/modern-go/reflect2
-# github.com/ugorji/go v1.1.4
-github.com/ugorji/go/codec
+# github.com/jackc/pgx v3.5.0+incompatible
+github.com/jackc/pgx/stdlib
+github.com/jackc/pgx
+github.com/jackc/pgx/pgtype
+github.com/jackc/pgx/internal/sanitize
+github.com/jackc/pgx/pgio
+github.com/jackc/pgx/pgproto3
+github.com/jackc/pgx/chunkreader
+# github.com/jmoiron/sqlx v1.2.0
+github.com/jmoiron/sqlx
+github.com/jmoiron/sqlx/reflectx
+# github.com/pkg/errors v0.8.1
+github.com/pkg/errors
+# golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
+golang.org/x/crypto/pbkdf2
 # golang.org/x/net v0.0.0-20190503192946-f4e77d36d62c
 golang.org/x/net/trace
 golang.org/x/net/internal/timeseries
@@ -36,10 +31,17 @@ golang.org/x/net/idna
 # golang.org/x/sys v0.0.0-20190222072716-a9d3bda3a223
 golang.org/x/sys/unix
 # golang.org/x/text v0.3.0
+golang.org/x/text/secure/precis
+golang.org/x/text/cases
+golang.org/x/text/language
+golang.org/x/text/runes
 golang.org/x/text/secure/bidirule
-golang.org/x/text/unicode/bidi
-golang.org/x/text/unicode/norm
 golang.org/x/text/transform
+golang.org/x/text/unicode/norm
+golang.org/x/text/width
+golang.org/x/text/internal
+golang.org/x/text/internal/tag
+golang.org/x/text/unicode/bidi
 # google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.23.0
@@ -78,7 +80,3 @@ google.golang.org/grpc/balancer/base
 google.golang.org/grpc/credentials/internal
 google.golang.org/grpc/binarylog/grpc_binarylog_v1
 google.golang.org/grpc/internal/syscall
-# gopkg.in/go-playground/validator.v8 v8.18.2
-gopkg.in/go-playground/validator.v8
-# gopkg.in/yaml.v2 v2.2.2
-gopkg.in/yaml.v2

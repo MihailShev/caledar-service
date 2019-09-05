@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/MihailShev/calendar-service/calendar"
 	"github.com/MihailShev/calendar-service/calendarpb"
+	repository "github.com/MihailShev/calendar-service/db"
+	_ "github.com/jackc/pgx"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/reflection"
@@ -19,6 +21,7 @@ func init() {
 }
 
 func main() {
+	repository.Connect()
 	server := calendarServer{service: calendar.NewCalendar()}
 
 	lis, err := net.Listen("tcp", "0.0.0.0:50051")
