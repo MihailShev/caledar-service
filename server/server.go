@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/MihailShev/calendar-service/calendar"
 	"github.com/MihailShev/calendar-service/calendarpb"
 	"github.com/golang/protobuf/ptypes/timestamp"
@@ -17,15 +16,13 @@ import (
 	"time"
 )
 
-func init() {
-	grpclog.SetLoggerV2(grpclog.NewLoggerV2(os.Stdout, os.Stderr, os.Stderr))
-}
-
 func main() {
-	cal, err := calendar.NewCalendar()
+	logger := grpclog.NewLoggerV2(os.Stdout, os.Stderr, os.Stderr)
+
+	cal, err := calendar.NewCalendar(logger)
 
 	if err != nil {
-		grpclog.Fatalln(err)
+		logger.Fatalln(err)
 	}
 
 	server := calendarServer{service: cal}
@@ -33,19 +30,19 @@ func main() {
 	lis, err := net.Listen("tcp", "0.0.0.0:50051")
 
 	if err != nil {
-		grpclog.Fatalf("failed to listen %v", err)
+		logger.Fatalf("failed to listen %v", err)
 	}
 
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(loggerInterceptor))
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(interceptorWithLogger(logger)))
 	reflection.Register(grpcServer)
-
 	calendarpb.RegisterCalendarServer(grpcServer, &server)
 
-	grpclog.Infof("GRPC listen 0.0.0.0:50051")
+	logger.Infof("GRPC listen 0.0.0.0:50051")
+
 	err = grpcServer.Serve(lis)
 
 	if err != nil {
-		grpclog.Fatal(err)
+		logger.Fatal(err)
 	}
 }
 
@@ -54,28 +51,28 @@ type calendarServer struct {
 }
 
 func (s *calendarServer) CreateEvent(ctx context.Context,
-	req *calendarpb.CreateEventReq) *calendarpb.CreateEventRes {
+	req *calendarpb.CreateEventReq) (*calendarpb.CreateEventRes, error) {
 
 	event := mapEventpbToEvent(req.GetEvent())
 
-	id, err := s.service.AddEvent(*event)
+	id, err := s.service.AddEvent(ctx, *event)
 
 	if err != nil {
-		return &calendarpb.CreateEventRes{Error: err.Error()}
+		return &calendarpb.CreateEventRes{Error: err.Error()}, nil
 	}
 
-	return &calendarpb.CreateEventRes{UUID: id}
+	return &calendarpb.CreateEventRes{UUID: id}, nil
 }
 
 func (s *calendarServer) GetEvent(ctx context.Context,
 	req *calendarpb.GetEventReq) (*calendarpb.GetEventRes, error) {
 
-	event, ok := s.service.GetEventByUUID(req.GetUUID())
+	event, err := s.service.GetEventByUUID(ctx, req.GetUUID())
 
-	if !ok {
+	if err != nil {
 		return &calendarpb.GetEventRes{
 			Event: nil,
-			Error: fmt.Sprintf("EventModel with uuid: %d not found", req.UUID),
+			Error: err.Error(),
 		}, nil
 	}
 
@@ -90,12 +87,12 @@ func (s *calendarServer) UpdateEvent(ctx context.Context,
 
 	event := mapEventpbToEvent(req.GetEvent())
 
-	updatedEvent, err := s.service.ReplaceEvent(*event)
+	updatedEvent, err := s.service.UpdateEvent(ctx, *event)
 
 	if err != nil {
 		return &calendarpb.UpdateEventRes{
 			Event: nil,
-			Error: fmt.Sprintf("EventModel with uuid: %d not found", req.Event.UUID),
+			Error: err.Error(),
 		}, nil
 	}
 

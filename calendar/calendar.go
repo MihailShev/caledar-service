@@ -1,23 +1,24 @@
 package calendar
 
 import (
-	"errors"
-	"fmt"
+	"context"
 	repository "github.com/MihailShev/calendar-service/db"
 	"sync"
 )
 
 type Event = repository.EventModel
+type Logger = repository.Logger
 
 type Calendar struct {
 	lock       sync.Mutex
 	events     map[int64]Event
 	counter    int64
 	repository repository.Repository
+	logger     repository.Logger
 }
 
-func NewCalendar() (Calendar, error) {
-	rep, err := repository.NewRepository()
+func NewCalendar(logger Logger) (Calendar, error) {
+	rep, err := repository.NewRepository(logger)
 
 	if err != nil {
 		return Calendar{}, err
@@ -28,35 +29,27 @@ func NewCalendar() (Calendar, error) {
 		counter:    0,
 		lock:       sync.Mutex{},
 		repository: rep,
+		logger:     logger,
 	}
 
 	return c, nil
 }
 
-func (c *Calendar) AddEvent(e Event) (int64, error) {
-	id, err := c.repository.CreateEvent(e)
+func (c *Calendar) AddEvent(ctx context.Context, e Event) (int64, error) {
+	id, err := c.repository.CreateEvent(ctx, e)
 
 	return id, err
 }
 
-func (c *Calendar) GetEventByUUID(uuid int64) (Event, error) {
+func (c *Calendar) GetEventByUUID(ctx context.Context, uuid int64) (Event, error) {
 
-	event, err := c.repository.GetEventById(uuid)
+	event, err := c.repository.GetEventById(ctx, uuid)
 
 	return event, err
 }
 
-func (c *Calendar) ReplaceEvent(event Event) (Event, error) {
-	_, ok := c.events[event.UUID]
+func (c *Calendar) UpdateEvent(ctx context.Context, event Event) (Event, error) {
+	event, err := c.repository.UpdateEvent(ctx, event)
 
-	if ok {
-		c.lock.Lock()
-
-		c.events[event.UUID] = event
-
-		c.lock.Unlock()
-		return event, nil
-	} else {
-		return event, errors.New(fmt.Sprintf("EventModel with uuid: %d not found", event.UUID))
-	}
+	return event, err
 }

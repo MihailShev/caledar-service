@@ -7,19 +7,21 @@ import (
 	"time"
 )
 
-func loggerInterceptor(ctx context.Context,
-	req interface{},
-	info *grpc.UnaryServerInfo,
-	handler grpc.UnaryHandler) (interface{}, error) {
+func interceptorWithLogger(logger grpclog.LoggerV2) grpc.UnaryServerInterceptor {
+	return func(ctx context.Context,
+		req interface{},
+		info *grpc.UnaryServerInfo,
+		handler grpc.UnaryHandler) (interface{}, error) {
 
-	start := time.Now()
+		start := time.Now()
 
-	h, err := handler(ctx, req)
+		h, err := handler(ctx, req)
 
-	grpclog.Infof("Request - Method:%s\tDuration:%s\tError:%v\n",
-		info.FullMethod,
-		time.Since(start),
-		err)
+		logger.Infof("Request - Method:%s\tDuration:%s\tError:%v\n",
+			info.FullMethod,
+			time.Since(start),
+			err)
 
-	return h, err
+		return h, err
+	}
 }

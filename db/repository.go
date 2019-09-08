@@ -1,12 +1,20 @@
 package repository
 
 import (
+	"context"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
 )
 
+type Logger interface {
+	Infof(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+	Warningf(format string, args ...interface{})
+}
+
 type Repository struct {
-	db *sqlx.DB
+	db     *sqlx.DB
+	logger Logger
 }
 
 func connect() (*sqlx.DB, error) {
@@ -26,42 +34,81 @@ func connect() (*sqlx.DB, error) {
 	return db, nil
 }
 
-func NewRepository() (Repository, error) {
+func NewRepository(logger Logger) (Repository, error) {
 	db, err := connect()
 
 	if err != nil {
 		return Repository{}, err
 	}
 
-	return Repository{db: db}, nil
+	logger.Infof("Connect to calendar db is established\n")
+
+	return Repository{db: db, logger: logger}, nil
 }
 
-func (r *Repository) CreateEvent(e EventModel) (int64, error) {
-	var id int64
+func (r *Repository) CreateEvent(ctx context.Context, e EventModel) (int64, error) {
+	var uuid int64
+
 	query := `INSERT INTO event(user_id, title, description, start, "end", notice_time)
-			VALUES ($1, $2, $3, $4, $5, $6)`
+			VALUES ($1, $2, $3, $4, $5, $6) RETURNING uuid`
 
-	res, err := r.db.Exec(query, e.UserId, e.Title, e.Description, e.Start, e.End, e.NoticeTime)
+	err := r.db.QueryRowContext(ctx, query, e.UserId, e.Title, e.Description, e.Start, e.End, e.NoticeTime).Scan(&uuid)
 
-	if err != nil {
-		return id, err
-	}
-
-	id, err = res.LastInsertId()
-
-	if err != nil {
-		return 0, err
-	}
-
-	return id, nil
+	return uuid, err
 }
 
-func (r *Repository) GetEventById(id int64) (EventModel, error) {
-	query := `SELECT * FROM WHERE uuid = $1;`
-	var e EventModel
+func (r *Repository) GetEventById(ctx context.Context, uuid int64) (EventModel, error) {
+	var event EventModel
+	query := `SELECT * FROM event WHERE uuid = :uuid;`
+	rows, err := r.db.NamedQueryContext(ctx, query, map[string]interface{}{"uuid": uuid})
 
-	row := r.db.QueryRow(query, id)
-	err := row.Scan(&e)
+	defer r.closeRows(rows)
 
-	return e, err
+	if err != nil {
+		return event, err
+	}
+
+	rows.Next()
+	err = rows.StructScan(&event)
+
+	return event, err
+}
+
+func (r *Repository) UpdateEvent(ctx context.Context, event EventModel) (EventModel, error) {
+	var updated EventModel
+
+	query := `UPDATE event 
+		SET (user_id, title, description, start, "end", notice_time) = 
+			(:userId, :title, :description, :start, :end, :noticeTime)
+		WHERE uuid = :uuid
+		RETURNING *;`
+
+	rows, err := r.db.NamedQueryContext(ctx, query, map[string]interface{}{
+		"uuid":        event.UUID,
+		"userId":      event.UserId,
+		"title":       event.Title,
+		"description": event.Description,
+		"start":       event.Start,
+		"end":         event.End,
+		"noticeTime":  event.NoticeTime,
+	})
+
+	defer r.closeRows(rows)
+
+	if err != nil {
+		return updated, err
+	}
+
+	rows.Next()
+	err = rows.StructScan(&updated)
+
+	return updated, err
+}
+
+func (r *Repository) closeRows(rows *sqlx.Rows) {
+	err := rows.Close()
+
+	if err != nil {
+		r.logger.Errorf("%s", err.Error())
+	}
 }

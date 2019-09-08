@@ -58,6 +58,10 @@ func createEvent(client calendarpb.CalendarClient) int64 {
 		log.Fatal(err)
 	}
 
+	if res.Error != "" {
+		log.Fatal(res.Error)
+	}
+
 	return res.GetUUID()
 }
 
@@ -72,7 +76,7 @@ func getEvent(client calendarpb.CalendarClient, uuid int64) *calendarpb.Event {
 	}
 
 	if res.Error != "" {
-		log.Fatal(res.Error)
+		log.Fatal(res)
 	}
 
 	return res.GetEvent()

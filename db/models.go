@@ -10,6 +10,6 @@ type EventModel struct {
 	Start       time.Time
 	End         time.Time
 	Description string
-	UserId      uint64
-	NoticeTime  uint32
+	UserId      uint64 `db:"user_id"`
+	NoticeTime  uint32 `db:"notice_time"`
 }
