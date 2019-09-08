@@ -1,61 +1,55 @@
 package calendar
 
 import (
-	"errors"
-	"fmt"
-	"github.com/golang/protobuf/ptypes/timestamp"
+	"context"
+	repository "github.com/MihailShev/calendar-service/db"
 	"sync"
 )
 
-type Event struct {
-	UUID        uint64
-	Title       string
-	Start       timestamp.Timestamp
-	End         timestamp.Timestamp
-	Description string
-	UserId      uint64
-	NoticeTime  uint32
-}
+type Event = repository.EventModel
+type Logger = repository.Logger
 
 type Calendar struct {
-	lock    sync.Mutex
-	events  map[uint64]Event
-	counter uint64
+	lock       sync.Mutex
+	events     map[int64]Event
+	counter    int64
+	repository repository.Repository
+	logger     repository.Logger
 }
 
-func NewCalendar() Calendar {
-	c := Calendar{events: make(map[uint64]Event), counter: 0, lock: sync.Mutex{}}
-	return c
-}
+func NewCalendar(logger Logger) (Calendar, error) {
+	rep, err := repository.NewRepository(logger)
 
-func (c *Calendar) AddEvent(event Event) Event {
-	c.lock.Lock()
-
-	c.counter++
-	event.UUID = c.counter
-	c.events[event.UUID] = event
-
-	c.lock.Unlock()
-
-	return event
-}
-
-func (c *Calendar) GetEventByUUID(uuid uint64) (e Event, ok bool) {
-	event, ok := c.events[uuid]
-	return event, ok
-}
-
-func (c *Calendar) ReplaceEvent(event Event) (Event, error) {
-	_, ok := c.events[event.UUID]
-
-	if ok {
-		c.lock.Lock()
-
-		c.events[event.UUID] = event
-
-		c.lock.Unlock()
-		return event, nil
-	} else {
-		return event, errors.New(fmt.Sprintf("Event with uuid: %d not found", event.UUID))
+	if err != nil {
+		return Calendar{}, err
 	}
+
+	c := Calendar{
+		events:     make(map[int64]Event),
+		counter:    0,
+		lock:       sync.Mutex{},
+		repository: rep,
+		logger:     logger,
+	}
+
+	return c, nil
+}
+
+func (c *Calendar) AddEvent(ctx context.Context, e Event) (int64, error) {
+	id, err := c.repository.CreateEvent(ctx, e)
+
+	return id, err
+}
+
+func (c *Calendar) GetEventByUUID(ctx context.Context, uuid int64) (Event, error) {
+
+	event, err := c.repository.GetEventById(ctx, uuid)
+
+	return event, err
+}
+
+func (c *Calendar) UpdateEvent(ctx context.Context, event Event) (Event, error) {
+	event, err := c.repository.UpdateEvent(ctx, event)
+
+	return event, err
 }
