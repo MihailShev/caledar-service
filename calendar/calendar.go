@@ -3,16 +3,12 @@ package calendar
 import (
 	"context"
 	repository "github.com/MihailShev/calendar-service/db"
-	"sync"
 )
 
 type Event = repository.EventModel
 type Logger = repository.Logger
 
 type Calendar struct {
-	lock       sync.Mutex
-	events     map[int64]Event
-	counter    int64
 	repository repository.Repository
 	logger     repository.Logger
 }
@@ -25,9 +21,6 @@ func NewCalendar(logger Logger) (Calendar, error) {
 	}
 
 	c := Calendar{
-		events:     make(map[int64]Event),
-		counter:    0,
-		lock:       sync.Mutex{},
 		repository: rep,
 		logger:     logger,
 	}
