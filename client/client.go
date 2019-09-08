@@ -36,7 +36,7 @@ func main() {
 	fmt.Printf("Updated event description: %+v\n", event)
 }
 
-func createEvent(client calendarpb.CalendarClient) uint64 {
+func createEvent(client calendarpb.CalendarClient) int64 {
 	ctx, cancel := context.WithTimeout(context.Background(), 400*time.Millisecond)
 	defer cancel()
 
@@ -61,7 +61,7 @@ func createEvent(client calendarpb.CalendarClient) uint64 {
 	return res.GetUUID()
 }
 
-func getEvent(client calendarpb.CalendarClient, uuid uint64) *calendarpb.Event {
+func getEvent(client calendarpb.CalendarClient, uuid int64) *calendarpb.Event {
 	ctx, cancel := context.WithTimeout(context.Background(), 400*time.Millisecond)
 	defer cancel()
 
