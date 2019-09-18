@@ -6,5 +6,5 @@ CREATE TABLE IF NOT EXISTS "event"
     "description" text,
     "start"       timestamp with time zone not null,
     "end"         timestamp with time zone not null,
-    "notice_time" integer
+    "notice_time"  timestamp with time zone
 );

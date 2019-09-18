@@ -2,10 +2,20 @@ package calendar
 
 import (
 	"context"
-	repository "github.com/MihailShev/calendar-service/db"
+	repository "github.com/MihailShev/calendar-service/internal/db"
+	"time"
 )
 
-type Event = repository.EventModel
+type Event struct {
+	UUID         int64
+	Title        string
+	Start        time.Time
+	End          time.Time
+	Description  string
+	UserId       uint64
+	NotifyBefore uint32
+}
+
 type Logger = repository.Logger
 
 type Calendar struct {

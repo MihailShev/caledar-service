@@ -1,11 +1,9 @@
-//go:generate protoc --proto_path ../calendarpb/ --go_out=plugins=grpc:../calendarpb calendar.proto
-
 package main
 
 import (
 	"context"
-	"github.com/MihailShev/calendar-service/calendar"
-	"github.com/MihailShev/calendar-service/calendarpb"
+	"github.com/MihailShev/calendar-service/internal/calendar"
+	"github.com/MihailShev/calendar-service/internal/grpc"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	_ "github.com/jackc/pgx"
 	"google.golang.org/grpc"
@@ -104,13 +102,13 @@ func (s *calendarServer) UpdateEvent(ctx context.Context,
 
 func mapEventpbToEvent(event *calendarpb.Event) *calendar.Event {
 	return &calendar.Event{
-		UUID:        event.UUID,
-		UserId:      event.UserId,
-		Description: event.Description,
-		End:         time.Unix(event.End.Seconds, int64(event.End.Nanos)),
-		Start:       time.Unix(event.Start.Seconds, int64(event.Start.Nanos)),
-		NoticeTime:  event.NoticeTime,
-		Title:       event.Title,
+		UUID:         event.UUID,
+		UserId:       event.UserId,
+		Description:  event.Description,
+		End:          time.Unix(event.End.Seconds, int64(event.End.Nanos)),
+		Start:        time.Unix(event.Start.Seconds, int64(event.Start.Nanos)),
+		NotifyBefore: event.NoticeTime,
+		Title:        event.Title,
 	}
 }
 
@@ -118,7 +116,7 @@ func mapEventToEventpb(event *calendar.Event) *calendarpb.Event {
 	return &calendarpb.Event{
 		UUID:        event.UUID,
 		Title:       event.Title,
-		NoticeTime:  event.NoticeTime,
+		NoticeTime:  event.NotifyBefore,
 		Start:       &timestamp.Timestamp{Seconds: event.Start.Unix()},
 		End:         &timestamp.Timestamp{Seconds: event.Start.Unix()},
 		Description: event.Description,

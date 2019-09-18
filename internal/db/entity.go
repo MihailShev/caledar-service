@@ -4,12 +4,12 @@ import (
 	"time"
 )
 
-type EventModel struct {
+type Event struct {
 	UUID        int64
 	Title       string
 	Start       time.Time
 	End         time.Time
 	Description string
-	UserId      uint64 `db:"user_id"`
-	NoticeTime  uint32 `db:"notice_time"`
+	UserId      uint64    `db:"user_id"`
+	NotifyTime  time.Time `db:"notice_time"`
 }

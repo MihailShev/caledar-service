@@ -46,19 +46,19 @@ func NewRepository(logger Logger) (Repository, error) {
 	return Repository{db: db, logger: logger}, nil
 }
 
-func (r *Repository) CreateEvent(ctx context.Context, e EventModel) (int64, error) {
+func (r *Repository) CreateEvent(ctx context.Context, e Event) (int64, error) {
 	var uuid int64
 
 	query := `INSERT INTO event(user_id, title, description, start, "end", notice_time)
 			VALUES ($1, $2, $3, $4, $5, $6) RETURNING uuid`
 
-	err := r.db.QueryRowContext(ctx, query, e.UserId, e.Title, e.Description, e.Start, e.End, e.NoticeTime).Scan(&uuid)
+	err := r.db.QueryRowContext(ctx, query, e.UserId, e.Title, e.Description, e.Start, e.End, e.NotifyTime).Scan(&uuid)
 
 	return uuid, err
 }
 
-func (r *Repository) GetEventById(ctx context.Context, uuid int64) (EventModel, error) {
-	var event EventModel
+func (r *Repository) GetEventById(ctx context.Context, uuid int64) (Event, error) {
+	var event Event
 	query := `SELECT * FROM event WHERE uuid = :uuid;`
 	rows, err := r.db.NamedQueryContext(ctx, query, map[string]interface{}{"uuid": uuid})
 
@@ -74,8 +74,8 @@ func (r *Repository) GetEventById(ctx context.Context, uuid int64) (EventModel, 
 	return event, err
 }
 
-func (r *Repository) UpdateEvent(ctx context.Context, event EventModel) (EventModel, error) {
-	var updated EventModel
+func (r *Repository) UpdateEvent(ctx context.Context, event Event) (Event, error) {
+	var updated Event
 
 	query := `UPDATE event 
 		SET (user_id, title, description, start, "end", notice_time) = 
@@ -90,7 +90,7 @@ func (r *Repository) UpdateEvent(ctx context.Context, event EventModel) (EventMo
 		"description": event.Description,
 		"start":       event.Start,
 		"end":         event.End,
-		"noticeTime":  event.NoticeTime,
+		"noticeTime":  event.NotifyTime,
 	})
 
 	defer r.closeRows(rows)
