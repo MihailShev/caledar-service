@@ -2,36 +2,40 @@ package calendar
 
 import (
 	"context"
-	repository "github.com/MihailShev/calendar-service/internal/db"
 	"time"
 )
 
 type Event struct {
-	UUID         int64
-	Title        string
-	Start        time.Time
-	End          time.Time
-	Description  string
-	UserId       uint64
-	NotifyBefore uint32
+	UUID        int64
+	Title       string
+	Start       time.Time
+	End         time.Time
+	NotifyTime  time.Time
+	Description string
+	UserId      uint64
 }
 
-type Logger = repository.Logger
+type Repository interface {
+	CreateEvent(ctx context.Context, event Event) (int64, error)
+	GetEventById(ctx context.Context, uuid int64) (Event, error)
+	UpdateEvent(ctx context.Context, event Event) (Event, error)
+}
+
+type Logger interface {
+	Infof(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+	Warningf(format string, args ...interface{})
+}
 
 type Calendar struct {
-	repository repository.Repository
-	logger     repository.Logger
+	repository Repository
+	logger     Logger
 }
 
-func NewCalendar(logger Logger) (Calendar, error) {
-	rep, err := repository.NewRepository(logger)
-
-	if err != nil {
-		return Calendar{}, err
-	}
+func NewCalendar(repository Repository, logger Logger) (Calendar, error) {
 
 	c := Calendar{
-		repository: rep,
+		repository: repository,
 		logger:     logger,
 	}
 

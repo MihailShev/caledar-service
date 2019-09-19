@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"github.com/MihailShev/calendar-service/internal/calendar"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
 )
@@ -34,19 +35,19 @@ func connect() (*sqlx.DB, error) {
 	return db, nil
 }
 
-func NewRepository(logger Logger) (Repository, error) {
+func NewRepository(logger Logger) (*Repository, error) {
 	db, err := connect()
 
 	if err != nil {
-		return Repository{}, err
+		return &Repository{}, err
 	}
 
 	logger.Infof("Connect to calendar db is established\n")
 
-	return Repository{db: db, logger: logger}, nil
+	return &Repository{db: db, logger: logger}, err
 }
 
-func (r *Repository) CreateEvent(ctx context.Context, e Event) (int64, error) {
+func (r *Repository) CreateEvent(ctx context.Context, e calendar.Event) (int64, error) {
 	var uuid int64
 
 	query := `INSERT INTO event(user_id, title, description, start, "end", notice_time)
@@ -57,8 +58,8 @@ func (r *Repository) CreateEvent(ctx context.Context, e Event) (int64, error) {
 	return uuid, err
 }
 
-func (r *Repository) GetEventById(ctx context.Context, uuid int64) (Event, error) {
-	var event Event
+func (r *Repository) GetEventById(ctx context.Context, uuid int64) (calendar.Event, error) {
+	var event calendar.Event
 	query := `SELECT * FROM event WHERE uuid = :uuid;`
 	rows, err := r.db.NamedQueryContext(ctx, query, map[string]interface{}{"uuid": uuid})
 
@@ -69,19 +70,26 @@ func (r *Repository) GetEventById(ctx context.Context, uuid int64) (Event, error
 	}
 
 	rows.Next()
-	err = rows.StructScan(&event)
+	err = rows.Scan(
+		&event.UUID,
+		&event.UserId,
+		&event.Title,
+		&event.Description,
+		&event.Start,
+		&event.End,
+		&event.NotifyTime)
 
 	return event, err
 }
 
-func (r *Repository) UpdateEvent(ctx context.Context, event Event) (Event, error) {
-	var updated Event
+func (r *Repository) UpdateEvent(ctx context.Context, event calendar.Event) (calendar.Event, error) {
+	var updated calendar.Event
 
 	query := `UPDATE event 
 		SET (user_id, title, description, start, "end", notice_time) = 
 			(:userId, :title, :description, :start, :end, :noticeTime)
 		WHERE uuid = :uuid
-		RETURNING *;`
+		RETURNING uuid;`
 
 	rows, err := r.db.NamedQueryContext(ctx, query, map[string]interface{}{
 		"uuid":        event.UUID,
@@ -98,9 +106,10 @@ func (r *Repository) UpdateEvent(ctx context.Context, event Event) (Event, error
 	if err != nil {
 		return updated, err
 	}
+	var uuid int64
 
 	rows.Next()
-	err = rows.StructScan(&updated)
+	err = rows.Scan(&uuid)
 
 	return updated, err
 }

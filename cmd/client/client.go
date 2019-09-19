@@ -42,14 +42,15 @@ func createEvent(client calendarpb.CalendarClient) int64 {
 
 	start := time.Now()
 	end := start.Add(5 * time.Minute)
+	notifyTime := start.Add(-5 * time.Minute)
 
 	res, err := client.CreateEvent(ctx, &calendarpb.CreateEventReq{
 		Event: &calendarpb.Event{
 			Title:       "Test event",
 			Start:       &timestamp.Timestamp{Seconds: start.Unix(), Nanos: 0},
 			End:         &timestamp.Timestamp{Seconds: end.Unix(), Nanos: 0},
-			Description: "Description",
-			NoticeTime:  5,
+			NotifyTime:  &timestamp.Timestamp{Seconds: notifyTime.Unix(), Nanos: 0},
+			Description: "test",
 			UserId:      1,
 		},
 	})
@@ -94,7 +95,7 @@ func updateEvent(client calendarpb.CalendarClient, event *calendarpb.Event) *cal
 			End:         event.End,
 			Description: "New description",
 			UserId:      event.UserId,
-			NoticeTime:  event.NoticeTime,
+			NotifyTime:  event.NotifyTime,
 		},
 	})
 

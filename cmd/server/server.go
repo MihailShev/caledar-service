@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/MihailShev/calendar-service/internal/calendar"
+	"github.com/MihailShev/calendar-service/internal/db"
 	"github.com/MihailShev/calendar-service/internal/grpc"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	_ "github.com/jackc/pgx"
@@ -14,16 +15,25 @@ import (
 	"time"
 )
 
+type calendarServer struct {
+	service calendar.Calendar
+}
+
 func main() {
 	logger := grpclog.NewLoggerV2(os.Stdout, os.Stderr, os.Stderr)
+	rep, err := repository.NewRepository(logger)
 
-	cal, err := calendar.NewCalendar(logger)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	cl, err := calendar.NewCalendar(rep, logger)
 
 	if err != nil {
 		logger.Fatalln(err)
 	}
 
-	server := calendarServer{service: cal}
+	server := calendarServer{service: cl}
 
 	lis, err := net.Listen("tcp", "0.0.0.0:50051")
 
@@ -42,10 +52,6 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-}
-
-type calendarServer struct {
-	service calendar.Calendar
 }
 
 func (s *calendarServer) CreateEvent(ctx context.Context,
@@ -102,13 +108,13 @@ func (s *calendarServer) UpdateEvent(ctx context.Context,
 
 func mapEventpbToEvent(event *calendarpb.Event) *calendar.Event {
 	return &calendar.Event{
-		UUID:         event.UUID,
-		UserId:       event.UserId,
-		Description:  event.Description,
-		End:          time.Unix(event.End.Seconds, int64(event.End.Nanos)),
-		Start:        time.Unix(event.Start.Seconds, int64(event.Start.Nanos)),
-		NotifyBefore: event.NoticeTime,
-		Title:        event.Title,
+		UUID:        event.UUID,
+		UserId:      event.UserId,
+		Description: event.Description,
+		Start:       time.Unix(event.Start.Seconds, int64(event.Start.Nanos)),
+		End:         time.Unix(event.End.Seconds, int64(event.End.Nanos)),
+		NotifyTime:  time.Unix(event.NotifyTime.Seconds, int64(event.NotifyTime.Nanos)),
+		Title:       event.Title,
 	}
 }
 
@@ -116,9 +122,9 @@ func mapEventToEventpb(event *calendar.Event) *calendarpb.Event {
 	return &calendarpb.Event{
 		UUID:        event.UUID,
 		Title:       event.Title,
-		NoticeTime:  event.NotifyBefore,
 		Start:       &timestamp.Timestamp{Seconds: event.Start.Unix()},
-		End:         &timestamp.Timestamp{Seconds: event.Start.Unix()},
+		End:         &timestamp.Timestamp{Seconds: event.End.Unix()},
+		NotifyTime:  &timestamp.Timestamp{Seconds: event.NotifyTime.Unix()},
 		Description: event.Description,
 		UserId:      event.UserId,
 	}
