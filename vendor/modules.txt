@@ -1,8 +1,8 @@
 # github.com/golang/protobuf v1.3.2
 github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/proto
-github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/protoc-gen-go/descriptor
+github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 # github.com/jackc/pgx v3.5.0+incompatible
@@ -18,6 +18,8 @@ github.com/jmoiron/sqlx
 github.com/jmoiron/sqlx/reflectx
 # github.com/pkg/errors v0.8.1
 github.com/pkg/errors
+# github.com/streadway/amqp v0.0.0-20190827072141-edfb9018d271
+github.com/streadway/amqp
 # golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
 golang.org/x/crypto/pbkdf2
 # golang.org/x/net v0.0.0-20190503192946-f4e77d36d62c
@@ -46,10 +48,10 @@ golang.org/x/text/unicode/bidi
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.23.0
 google.golang.org/grpc
-google.golang.org/grpc/codes
-google.golang.org/grpc/status
 google.golang.org/grpc/grpclog
 google.golang.org/grpc/reflection
+google.golang.org/grpc/codes
+google.golang.org/grpc/status
 google.golang.org/grpc/balancer
 google.golang.org/grpc/balancer/roundrobin
 google.golang.org/grpc/connectivity

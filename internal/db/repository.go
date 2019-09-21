@@ -111,6 +111,12 @@ func (r *Repository) UpdateEvent(ctx context.Context, event calendar.Event) (cal
 	rows.Next()
 	err = rows.Scan(&uuid)
 
+	if err != nil {
+		return updated, err
+	}
+
+	updated, err = r.GetEventById(ctx, uuid)
+
 	return updated, err
 }
 

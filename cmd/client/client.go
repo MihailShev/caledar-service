@@ -40,7 +40,7 @@ func createEvent(client calendarpb.CalendarClient) int64 {
 	ctx, cancel := context.WithTimeout(context.Background(), 400*time.Millisecond)
 	defer cancel()
 
-	start := time.Now()
+	start := time.Now().Add(5 * time.Minute)
 	end := start.Add(5 * time.Minute)
 	notifyTime := start.Add(-5 * time.Minute)
 
