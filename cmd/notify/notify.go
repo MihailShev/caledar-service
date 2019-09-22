@@ -1,12 +1,20 @@
 package main
 
 import (
+	"github.com/MihailShev/calendar-service/config"
 	. "github.com/streadway/amqp"
 	"log"
 )
 
 func main() {
-	conn, err := Dial("amqp://mshev:123@localhost:5672/")
+	conf := config.Conf{}
+	configuration, err := conf.GetConfig()
+
+	if err != nil {
+		failOnError(err, "Failed to read config")
+	}
+
+	conn, err := Dial(configuration.AMPQ.Addr)
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 
@@ -15,12 +23,12 @@ func main() {
 	defer ch.Close()
 
 	q, err := ch.QueueDeclare(
-		"notify", // name
-		false,    // durable
-		false,    // delete when unused
-		false,    // exclusive
-		false,    // no-wait
-		nil,      // arguments
+		configuration.AMPQ.NotifyQueue, // name
+		false,                          // durable
+		false,                          // delete when unused
+		false,                          // exclusive
+		false,                          // no-wait
+		nil,                            // arguments
 	)
 	failOnError(err, "Failed to declare a queue")
 
@@ -43,12 +51,12 @@ func main() {
 		}
 	}()
 
-	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
+	log.Printf(" [*] Waiting for messages.")
 	<-forever
 }
 
 func notify(m []byte) {
-	log.Println("Event notify", m)
+	log.Println("Event notify", string(m))
 }
 
 func failOnError(err error, msg string) {

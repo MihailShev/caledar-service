@@ -1,0 +1,8 @@
+DB:
+  Dns: "postgres://mshev:123qwe@localhost:5432/calendar?sslmode=disable"
+GRPC:
+  Addr: "0.0.0.0:50051"
+AMPQ:
+  Addr: "amqp://mshev:123@localhost:5672/"
+  NotifyQueue: "notify"
+

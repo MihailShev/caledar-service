@@ -15,7 +15,7 @@ type Event struct {
 	UserId      uint64
 }
 
-type Repository interface {
+type EventStorage interface {
 	CreateEvent(ctx context.Context, event Event) (int64, error)
 	GetEventById(ctx context.Context, uuid int64) (Event, error)
 	UpdateEvent(ctx context.Context, event Event) (Event, error)
@@ -28,35 +28,35 @@ type Logger interface {
 }
 
 type Calendar struct {
-	repository Repository
-	logger     Logger
+	EventStorage EventStorage
+	logger       Logger
 }
 
-func NewCalendar(repository Repository, logger Logger) (Calendar, error) {
+func NewCalendar(repository EventStorage, logger Logger) (Calendar, error) {
 
 	c := Calendar{
-		repository: repository,
-		logger:     logger,
+		EventStorage: repository,
+		logger:       logger,
 	}
 
 	return c, nil
 }
 
 func (c *Calendar) AddEvent(ctx context.Context, e Event) (int64, error) {
-	id, err := c.repository.CreateEvent(ctx, e)
+	id, err := c.EventStorage.CreateEvent(ctx, e)
 
 	return id, err
 }
 
 func (c *Calendar) GetEventByUUID(ctx context.Context, uuid int64) (Event, error) {
 
-	event, err := c.repository.GetEventById(ctx, uuid)
+	event, err := c.EventStorage.GetEventById(ctx, uuid)
 
 	return event, err
 }
 
 func (c *Calendar) UpdateEvent(ctx context.Context, event Event) (Event, error) {
-	event, err := c.repository.UpdateEvent(ctx, event)
+	event, err := c.EventStorage.UpdateEvent(ctx, event)
 
 	return event, err
 }

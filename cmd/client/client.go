@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/MihailShev/calendar-service/config"
 	"github.com/MihailShev/calendar-service/internal/grpc"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"google.golang.org/grpc"
@@ -11,7 +12,14 @@ import (
 )
 
 func main() {
-	cc, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	conf := config.Conf{}
+	configuration, err := conf.GetConfig()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cc, err := grpc.Dial(configuration.GRPC.Addr, grpc.WithInsecure())
 
 	if err != nil {
 		log.Fatalf("could not connect: %v", err)
