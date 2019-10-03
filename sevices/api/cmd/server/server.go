@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"github.com/MihailShev/calendar-service/config"
-	"github.com/MihailShev/calendar-service/internal/calendar"
-	"github.com/MihailShev/calendar-service/internal/db"
-	"github.com/MihailShev/calendar-service/internal/grpc"
+	"github.com/MihailShev/calendar-service/pkg/connector"
+	"github.com/MihailShev/calendar-service/sevices/api/internal/calendar"
+	"github.com/MihailShev/calendar-service/sevices/api/internal/db"
+	"github.com/MihailShev/calendar-service/sevices/api/internal/grpc"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	_ "github.com/jackc/pgx"
 	"google.golang.org/grpc"
@@ -29,7 +30,7 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	rep, err := db.NewEventStorage(logger, db.Config{Dns: configuration.DB.Dns})
+	rep, err := db.NewEventStorage(logger, connector.Config{Dns: configuration.DB.Dns})
 
 	if err != nil {
 		logger.Fatal(err)

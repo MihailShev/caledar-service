@@ -44,8 +44,8 @@ func (c *Conf) GetConfig() (Config, error) {
 }
 
 func (c *Conf) read() error {
+	viper.AddConfigPath("../../../../config")
 	viper.AddConfigPath("config")
-	viper.AddConfigPath("../../config")
 
 	err := viper.ReadInConfig()
 

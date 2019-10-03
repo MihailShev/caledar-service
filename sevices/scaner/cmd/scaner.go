@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/MihailShev/calendar-service/config"
-	"github.com/MihailShev/calendar-service/internal/db"
+	"github.com/MihailShev/calendar-service/sevices/scaner/db"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/streadway/amqp"
 	"log"

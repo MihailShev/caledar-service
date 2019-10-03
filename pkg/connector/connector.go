@@ -1,4 +1,4 @@
-package db
+package connector
 
 import "github.com/jmoiron/sqlx"
 
@@ -6,7 +6,7 @@ type Config struct {
 	Dns string
 }
 
-func connect(dns string) (*sqlx.DB, error) {
+func Connect(dns string) (*sqlx.DB, error) {
 	db, err := sqlx.Open("pgx", dns)
 
 	if err != nil {

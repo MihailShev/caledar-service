@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/MihailShev/calendar-service/config"
-	. "github.com/streadway/amqp"
+	"github.com/streadway/amqp"
 	"log"
 )
 
@@ -14,7 +14,7 @@ func main() {
 		failOnError(err, "Failed to read config")
 	}
 
-	conn, err := Dial(configuration.AMPQ.Addr)
+	conn, err := amqp.Dial(configuration.AMPQ.Addr)
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 
