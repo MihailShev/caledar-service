@@ -1,0 +1,4 @@
+AMQP:
+  Addr: "amqp://mshev:123@localhost:5672/"
+  NotifyQueue: "notify"
+DB: "postgres://mshev:123qwe@localhost:5432/calendar?sslmode=disable"

@@ -2,13 +2,24 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/MihailShev/calendar-service/config"
-	"github.com/MihailShev/calendar-service/internal/db"
+	"github.com/MihailShev/calendar-service/pkg/config"
+	"github.com/MihailShev/calendar-service/pkg/connector"
+	"github.com/MihailShev/calendar-service/services/scaner/db"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/streadway/amqp"
 	"log"
 	"time"
 )
+
+type Config struct {
+	DB string
+	AMQP
+}
+
+type AMQP struct {
+	Addr        string
+	NotifyQueue string
+}
 
 type Event struct {
 	UUID        int64
@@ -26,30 +37,28 @@ type Queue struct {
 }
 
 func main() {
-	conf := config.Conf{}
-	configuration, err := conf.GetConfig()
+	var config = Config{}
+	err := conf.Read("../", &config)
 
 	failOnError(err)
 
-	scan, err := db.NewEventScanner(db.Config{Dns: configuration.Dns})
+	scan, err := db.NewEventScanner(connector.Config{Dns: config.DB})
 
 	failOnError(err)
 
 	forever := make(chan struct{})
 
 	go func() {
-		q := getQueue(configuration.AMPQ)
+		q := getQueue(config.AMQP)
 		ticker := time.NewTicker(1 * time.Minute)
-		lastScan := time.Now()
-
-		sendEvents(scan, q, lastScan.Add(-1*time.Minute), lastScan)
+		lastScan := time.Now().Add(-1 * time.Minute)
 
 		for {
-			<-ticker.C
-
 			curTime := time.Now()
 			sendEvents(scan, q, lastScan, curTime)
 			lastScan = curTime
+
+			<-ticker.C
 		}
 	}()
 
@@ -66,11 +75,12 @@ func sendEvents(eventScanner *db.EventScanner, q *Queue, dateFrom time.Time, dat
 	for _, v := range events {
 		body, err := json.Marshal(v)
 
-		if err == nil {
-			publish(q, body)
-		} else {
+		if err != nil {
 			logError(err)
+			continue
 		}
+
+		publish(q, body)
 	}
 }
 
@@ -93,7 +103,7 @@ func publish(q *Queue, body []byte) {
 
 }
 
-func getQueue(conf config.AMPQ) *Queue {
+func getQueue(conf AMQP) *Queue {
 	conn, err := amqp.Dial(conf.Addr)
 	failOnError(err)
 

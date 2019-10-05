@@ -2,7 +2,8 @@ package db
 
 import (
 	"context"
-	"github.com/MihailShev/calendar-service/internal/calendar"
+	"github.com/MihailShev/calendar-service/pkg/connector"
+	"github.com/MihailShev/calendar-service/services/api/internal/calendar"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
 )
@@ -18,8 +19,8 @@ type EventStorage struct {
 	logger Logger
 }
 
-func NewEventStorage(logger Logger, config Config) (*EventStorage, error) {
-	db, err := connect(config.Dns)
+func NewEventStorage(logger Logger, config connector.Config) (*EventStorage, error) {
+	db, err := connector.Connect(config.Dns)
 
 	if err != nil {
 		return &EventStorage{}, err
