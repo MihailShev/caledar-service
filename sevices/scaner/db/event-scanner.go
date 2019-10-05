@@ -1,7 +1,6 @@
 package db
 
 import (
-	"github.com/MihailShev/calendar-service/config"
 	"github.com/MihailShev/calendar-service/pkg/connector"
 	"github.com/jmoiron/sqlx"
 	"time"
@@ -21,7 +20,7 @@ type EventScanner struct {
 	db *sqlx.DB
 }
 
-func NewEventScanner(config config.Config) (*EventScanner, error) {
+func NewEventScanner(config connector.Config) (*EventScanner, error) {
 	db, err := connector.Connect(config.Dns)
 
 	if err != nil {

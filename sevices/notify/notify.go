@@ -1,20 +1,25 @@
 package main
 
 import (
-	"github.com/MihailShev/calendar-service/config"
+	"github.com/MihailShev/calendar-service/pkg/config"
 	"github.com/streadway/amqp"
 	"log"
 )
 
+type Config struct {
+	Addr        string
+	NotifyQueue string
+}
+
 func main() {
-	conf := config.Conf{}
-	configuration, err := conf.GetConfig()
+	var config = Config{}
+	err := conf.Read("./", &config)
 
 	if err != nil {
 		failOnError(err, "Failed to read config")
 	}
 
-	conn, err := amqp.Dial(configuration.AMPQ.Addr)
+	conn, err := amqp.Dial(config.Addr)
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 
@@ -23,12 +28,12 @@ func main() {
 	defer ch.Close()
 
 	q, err := ch.QueueDeclare(
-		configuration.AMPQ.NotifyQueue, // name
-		false,                          // durable
-		false,                          // delete when unused
-		false,                          // exclusive
-		false,                          // no-wait
-		nil,                            // arguments
+		config.NotifyQueue, // name
+		false,              // durable
+		false,              // delete when unused
+		false,              // exclusive
+		false,              // no-wait
+		nil,                // arguments
 	)
 	failOnError(err, "Failed to declare a queue")
 

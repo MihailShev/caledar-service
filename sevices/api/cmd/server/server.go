@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/MihailShev/calendar-service/config"
+	conf "github.com/MihailShev/calendar-service/pkg/config"
 	"github.com/MihailShev/calendar-service/pkg/connector"
 	"github.com/MihailShev/calendar-service/sevices/api/internal/calendar"
 	"github.com/MihailShev/calendar-service/sevices/api/internal/db"
@@ -21,16 +21,21 @@ type calendarServer struct {
 	service calendar.Calendar
 }
 
+type Config struct {
+	DNS  string
+	GRPC string
+}
+
 func main() {
 	logger := grpclog.NewLoggerV2(os.Stdout, os.Stderr, os.Stderr)
-	conf := config.Conf{}
-	configuration, err := conf.GetConfig()
+	var config = Config{}
+	err := conf.Read("../../", &config)
 
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	rep, err := db.NewEventStorage(logger, connector.Config{Dns: configuration.DB.Dns})
+	rep, err := db.NewEventStorage(logger, connector.Config{Dns: config.DNS})
 
 	if err != nil {
 		logger.Fatal(err)
@@ -44,7 +49,7 @@ func main() {
 
 	server := calendarServer{service: cl}
 
-	lis, err := net.Listen("tcp", configuration.GRPC.Addr)
+	lis, err := net.Listen("tcp", config.GRPC)
 
 	if err != nil {
 		logger.Fatalf("failed to listen %v", err)
@@ -54,7 +59,7 @@ func main() {
 	reflection.Register(grpcServer)
 	calendarpb.RegisterCalendarServer(grpcServer, &server)
 
-	logger.Infof("GRPC listen %s", configuration.GRPC.Addr)
+	logger.Infof("GRPC listen %s", config.GRPC)
 
 	err = grpcServer.Serve(lis)
 
