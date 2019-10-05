@@ -1,2 +1,2 @@
 gen:
-	protoc --proto_path internal/grpc/ --go_out=plugins=grpc:internal/grpc calendar.proto
+	protoc --proto_path services/api/internal/grpc --go_out=plugins=grpc:services/api/internal/grpc calendar.proto

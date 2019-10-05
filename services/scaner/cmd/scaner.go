@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/MihailShev/calendar-service/pkg/config"
 	"github.com/MihailShev/calendar-service/pkg/connector"
-	"github.com/MihailShev/calendar-service/sevices/scaner/db"
+	"github.com/MihailShev/calendar-service/services/scaner/db"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/streadway/amqp"
 	"log"

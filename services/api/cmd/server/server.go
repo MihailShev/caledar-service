@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
-	conf "github.com/MihailShev/calendar-service/pkg/config"
+	"github.com/MihailShev/calendar-service/pkg/config"
 	"github.com/MihailShev/calendar-service/pkg/connector"
-	"github.com/MihailShev/calendar-service/sevices/api/internal/calendar"
-	"github.com/MihailShev/calendar-service/sevices/api/internal/db"
-	"github.com/MihailShev/calendar-service/sevices/api/internal/grpc"
+	"github.com/MihailShev/calendar-service/services/api/internal/calendar"
+	"github.com/MihailShev/calendar-service/services/api/internal/db"
+	"github.com/MihailShev/calendar-service/services/api/internal/grpc"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	_ "github.com/jackc/pgx"
 	"google.golang.org/grpc"

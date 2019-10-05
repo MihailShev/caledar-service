@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	conf "github.com/MihailShev/calendar-service/pkg/config"
-	"github.com/MihailShev/calendar-service/sevices/api/internal/grpc"
+	"github.com/MihailShev/calendar-service/pkg/config"
+	"github.com/MihailShev/calendar-service/services/api/internal/grpc"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"google.golang.org/grpc"
 	"log"

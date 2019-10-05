@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 	"github.com/MihailShev/calendar-service/pkg/connector"
-	"github.com/MihailShev/calendar-service/sevices/api/internal/calendar"
+	"github.com/MihailShev/calendar-service/services/api/internal/calendar"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
 )
