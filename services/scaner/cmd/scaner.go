@@ -17,8 +17,10 @@ type Config struct {
 }
 
 type AMQP struct {
-	Addr        string
-	NotifyQueue string
+	Addr            string
+	NotifyQueue     string
+	ConnectionDelay time.Duration
+	ConnectionTry   int
 }
 
 type Event struct {
@@ -38,7 +40,7 @@ type Queue struct {
 
 func main() {
 	var config = Config{}
-	err := conf.Read("../", &config)
+	err := conf.Read("./", &config)
 
 	failOnError(err)
 
@@ -104,7 +106,7 @@ func publish(q *Queue, body []byte) {
 }
 
 func getQueue(conf AMQP) *Queue {
-	conn, err := amqp.Dial(conf.Addr)
+	conn, err := queueConnect(conf)
 	failOnError(err)
 
 	ch, err := conn.Channel()
@@ -124,6 +126,31 @@ func getQueue(conf AMQP) *Queue {
 		q:  q,
 		ch: ch,
 	}
+}
+
+func queueConnect(config AMQP) (*amqp.Connection, error) {
+	connectionTry := 0
+	var conn *amqp.Connection
+	var err error
+
+	for connectionTry < config.ConnectionTry {
+		connectionTry++
+
+		log.Println("Trying connect to queue broker", connectionTry)
+
+		conn, err = amqp.Dial(config.Addr)
+
+		if err == nil {
+			log.Println("Connect to queue broker is established")
+			break
+		}
+
+		log.Println("Failed to connect to queue broker", err)
+
+		time.Sleep(config.ConnectionDelay * time.Second)
+	}
+
+	return conn, err
 }
 
 func failOnError(err error) {

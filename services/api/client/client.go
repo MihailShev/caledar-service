@@ -17,7 +17,7 @@ type Config struct {
 
 func main() {
 	var config = Config{}
-	err := conf.Read("../../", &config)
+	err := conf.Read("../", &config)
 
 	if err != nil {
 		log.Fatal(err)

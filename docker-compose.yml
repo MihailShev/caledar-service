@@ -1,0 +1,39 @@
+version: '3'
+
+volumes:
+  pg-data:
+
+services:
+  server:
+    depends_on:
+      - db
+    container_name: server
+    image: mshev/calendar-server:1
+    ports:
+      - "50051:50051"
+
+  db:
+    container_name: postgres
+    image: mshev/calendar-db:1
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+  scaner:
+    depends_on:
+      - db
+      - queue
+    container_name: scaner
+    image: mshev/calendar-scaner:2
+
+
+  notify:
+    depends_on:
+      - queue
+    container_name: notify
+    image: mshev/calendar-notify:2
+
+  queue:
+    container_name: rabbit
+    image: rabbitmq:3

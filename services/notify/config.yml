@@ -1,2 +1,4 @@
-Addr: "amqp://mshev:123@localhost:5672/"
+Addr: "amqp://guest:guest@queue:5672/"
 NotifyQueue: "notify"
+ConnectionDelay: 10
+ConnectionTry: 3
