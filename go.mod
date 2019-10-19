@@ -3,6 +3,7 @@ module github.com/MihailShev/calendar-service
 go 1.12
 
 require (
+	github.com/DATA-DOG/godog v0.7.13
 	github.com/MihailShev/caledar-service v0.0.0-20190811175605-50e2ea5d7c3b // indirect
 	github.com/cockroachdb/apd v1.1.0 // indirect
 	github.com/golang/protobuf v1.3.2

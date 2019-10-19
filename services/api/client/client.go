@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/MihailShev/calendar-service/pkg/config"
-	"github.com/MihailShev/calendar-service/services/api/internal/grpc"
+	"github.com/MihailShev/calendar-service/pkg/grpc"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"google.golang.org/grpc"
 	"log"
@@ -74,7 +74,7 @@ func createEvent(client calendarpb.CalendarClient) int64 {
 	if res.Error != "" {
 		log.Fatal(res.Error)
 	}
-
+	fmt.Println(res)
 	return res.GetUUID()
 }
 

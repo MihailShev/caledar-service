@@ -52,8 +52,8 @@ func main() {
 
 	go func() {
 		q := getQueue(config.AMQP)
-		ticker := time.NewTicker(1 * time.Minute)
-		lastScan := time.Now().Add(-1 * time.Minute)
+		ticker := time.NewTicker(10 * time.Second)
+		lastScan := time.Now().Add(-10 * time.Second)
 
 		for {
 			curTime := time.Now()
