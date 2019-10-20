@@ -1,8 +1,8 @@
 # file: features/calendar.feature
 
-Feature: Create event
-    Create event
-    I need to be able to create some calendar event
+Feature: Calendar service
+    I need to be able to create some calendar event and get notify
+    And I need to able to get created event and update it
 
     Scenario: Create event
         When I create calendar client
@@ -18,6 +18,7 @@ Feature: Create event
         }
         """
        And The response error should be empty
+       And I received notify message with created event
 
     Scenario: Get event
         When I send message get event
@@ -34,5 +35,3 @@ Feature: Create event
         When I send message update event with new title "Updated title"
         Then Event title match "Updated title"
 
-    Scenario: Notification message is received
-        When I received notify message

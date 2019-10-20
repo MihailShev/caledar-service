@@ -33,8 +33,10 @@ type CalendarTest struct {
 	getEventRes    calendarpb.GetEventRes
 	updateEventRes calendarpb.UpdateEventRes
 	client         calendarpb.CalendarClient
-	amqpConn *amqp.Connection
-	notifyMessage string
+	amqpConn       *amqp.Connection
+	ampqCh         *amqp.Channel
+	notifyMessage  []byte
+	stopSignal     chan struct{}
 }
 
 func panicOnErr(err error) {
@@ -43,34 +45,30 @@ func panicOnErr(err error) {
 	}
 }
 
-func (test *CalendarTest) startReadNotifyQueue(feature *gherkin.Feature) {
-	fmt.Println("start read notify queue")
+func (test *CalendarTest) beforeFeature(f *gherkin.Feature) {
+	test.stopSignal = make(chan struct{})
+
 	var err error
-	test.amqpConn, err = amqp.Dial("amqp://guest:guest@0.0.0.0:5673/")
+	test.amqpConn, err = amqp.Dial("amqp://guest:guest@queue:5672/")
 	panicOnErr(err)
 
-	ch, err := test.amqpConn.Channel()
+	test.ampqCh, err = test.amqpConn.Channel()
 	panicOnErr(err)
-	defer ch.Close()
 
-	q, err := ch.QueueDeclare(
-		"notify", // name
-		false,              // durable
-		false,              // delete when unused
-		false,              // exclusive
-		false,              // no-wait
-		nil,                // arguments
+	q, err := test.ampqCh.QueueDeclare(
+		"notify_test", // name
+		false,         // durable
+		false,         // delete when unused
+		false,         // exclusive
+		false,         // no-wait
+		nil,           // arguments
 	)
 	panicOnErr(err)
 
-	err = ch.ExchangeDeclare("check",
-		"fanout", true, false, false, false, nil)
+	err = test.ampqCh.QueueBind("notify_test", "", "notifyExchange", false, nil)
 	panicOnErr(err)
 
-	err = ch.QueueBind("notify", "", "check", false, nil)
-	panicOnErr(err)
-
-	msgs, err := ch.Consume(
+	msgs, err := test.ampqCh.Consume(
 		q.Name, // queue
 		"",     // consumer
 		true,   // auto-ack
@@ -81,21 +79,30 @@ func (test *CalendarTest) startReadNotifyQueue(feature *gherkin.Feature) {
 	)
 	panicOnErr(err)
 
-
-	go func() {
-		message := <- msgs
-		fmt.Println("got message:", message)
-		test.notifyMessage = string(message.Body)
-	}()
+	go func(stop chan struct{}) {
+		for {
+			select {
+			case <-stop:
+				return
+			case mess := <-msgs:
+				test.notifyMessage = mess.Body
+			}
+		}
+	}(test.stopSignal)
 }
 
-func (test *CalendarTest) after(feature *gherkin.Feature)  {
-	err := test.amqpConn.Close()
+func (test *CalendarTest) afterFeature(feature *gherkin.Feature) {
+	test.stopSignal <- struct{}{}
+
+	err := test.ampqCh.Close()
+	panicOnErr(err)
+
+	err = test.amqpConn.Close()
 	panicOnErr(err)
 }
 
 func (test *CalendarTest) iCreateCalendarClient() error {
-	cc, err := grpc.Dial(":50051", grpc.WithInsecure())
+	cc, err := grpc.Dial("server:50051", grpc.WithInsecure())
 
 	if err != nil {
 		return err
@@ -229,21 +236,36 @@ func (test *CalendarTest) eventTitleMatch(newTitle string) error {
 	return nil
 }
 
-func (test *CalendarTest) iReceivedNotifyMessage() error  {
-	time.Sleep(10 * time.Second)
-	fmt.Println("received message:", test.notifyMessage)
+func (test *CalendarTest) iReceivedNotifyMessageWithCreatedEvent() error {
+	fmt.Println("Waiting 10 seconds for the scanner publish notify message.")
+	wait(10)
+
+	var event = struct {
+		UUID int64
+	}{}
+
+	err := json.Unmarshal(test.notifyMessage, &event)
+
+	if err != nil {
+		return err
+	}
+
+	if event.UUID != test.createEventRes.GetUUID() {
+		return fmt.Errorf("expected userId %d, got %d", test.createEventRes.GetUUID(), event.UUID)
+	}
+
 	return nil
 }
 
-
 func FeatureContext(s *godog.Suite) {
 	test := CalendarTest{}
-	s.BeforeFeature(test.startReadNotifyQueue)
+	s.BeforeFeature(test.beforeFeature)
 
 	//  Scenario: Create event
 	s.Step(`^I create calendar client$`, test.iCreateCalendarClient)
 	s.Step(`^I send message create event with params:$`, test.iSendMessageCreateEventWithData)
 	s.Step(`^The response error should be empty$`, test.theResponseErrorShouldBeEmpty)
+	s.Step(`^I received notify message with created event$`, test.iReceivedNotifyMessageWithCreatedEvent)
 
 	// Scenario Get event
 	s.Step(`^I send message get event$`, test.iSendMessageGetEvent)
@@ -253,7 +275,5 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^I send message update event with new title "([^"]*)"$`, test.iSendMessageUpdateEventWithNewTitle)
 	s.Step(`^Event title match "([^"]*)"$`, test.eventTitleMatch)
 
-	s.Step(`^I received notify message$`, test.iReceivedNotifyMessage)
-
-	s.AfterFeature(test.after)
+	s.AfterFeature(test.afterFeature)
 }

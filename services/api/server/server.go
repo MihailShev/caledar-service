@@ -48,7 +48,6 @@ func main() {
 	}
 
 	server := calendarServer{service: cl}
-
 	lis, err := net.Listen("tcp", config.GRPC)
 
 	if err != nil {

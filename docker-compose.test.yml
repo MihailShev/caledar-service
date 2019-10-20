@@ -4,16 +4,17 @@ volumes:
   pg-data:
 
 services:
+
   server:
     depends_on:
       - postgres
-    container_name: server
+    container_name: server-test
     image: mshev/calendar-server:2
     ports:
       - "50051:50051"
 
   postgres:
-    container_name: postgres
+    container_name: postgres-test
     image: mshev/calendar-db:1
     volumes:
       - pg-data:/var/lib/postgresql/data
@@ -24,19 +25,25 @@ services:
     depends_on:
       - postgres
       - queue
-    container_name: scaner
+    container_name: scaner-test
     image: mshev/calendar-scaner:4
-
 
   notify:
     depends_on:
       - queue
-    container_name: notify
+    container_name: notify-test
     image: mshev/calendar-notify:3
 
   queue:
-    container_name: rabbit
+    container_name: rabbit-test
     image: rabbitmq:3.7.17-management
     ports:
       - "5673:5672"
       - "15673:15672"
+
+  integration_test:
+    container_name: test
+    image: mshev/calendar-test:2
+    depends_on:
+      - queue
+      - server
