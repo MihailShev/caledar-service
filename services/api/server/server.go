@@ -4,9 +4,9 @@ import (
 	"context"
 	"github.com/MihailShev/calendar-service/pkg/config"
 	"github.com/MihailShev/calendar-service/pkg/connector"
+	"github.com/MihailShev/calendar-service/pkg/grpc"
 	"github.com/MihailShev/calendar-service/services/api/internal/calendar"
 	"github.com/MihailShev/calendar-service/services/api/internal/db"
-	"github.com/MihailShev/calendar-service/services/api/internal/grpc"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	_ "github.com/jackc/pgx"
 	"google.golang.org/grpc"
@@ -48,7 +48,6 @@ func main() {
 	}
 
 	server := calendarServer{service: cl}
-
 	lis, err := net.Listen("tcp", config.GRPC)
 
 	if err != nil {

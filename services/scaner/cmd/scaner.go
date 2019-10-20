@@ -19,6 +19,7 @@ type Config struct {
 type AMQP struct {
 	Addr            string
 	NotifyQueue     string
+	NotifyExchange  string
 	ConnectionDelay time.Duration
 	ConnectionTry   int
 }
@@ -34,8 +35,9 @@ type Event struct {
 }
 
 type Queue struct {
-	q  amqp.Queue
-	ch *amqp.Channel
+	q        amqp.Queue
+	ch       *amqp.Channel
+	exchange string
 }
 
 func main() {
@@ -52,8 +54,8 @@ func main() {
 
 	go func() {
 		q := getQueue(config.AMQP)
-		ticker := time.NewTicker(1 * time.Minute)
-		lastScan := time.Now().Add(-1 * time.Minute)
+		ticker := time.NewTicker(10 * time.Second)
+		lastScan := time.Now().Add(-10 * time.Second)
 
 		for {
 			curTime := time.Now()
@@ -88,8 +90,8 @@ func sendEvents(eventScanner *db.EventScanner, q *Queue, dateFrom time.Time, dat
 
 func publish(q *Queue, body []byte) {
 	err := q.ch.Publish(
+		q.exchange,
 		"",
-		q.q.Name,
 		false,
 		false,
 		amqp.Publishing{
@@ -122,9 +124,17 @@ func getQueue(conf AMQP) *Queue {
 	)
 	failOnError(err)
 
+	err = ch.ExchangeDeclare(conf.NotifyExchange,
+		"direct", true, false, false, false, nil)
+	failOnError(err)
+
+	err = ch.QueueBind(conf.NotifyQueue, "", conf.NotifyExchange, false, nil)
+	failOnError(err)
+
 	return &Queue{
-		q:  q,
-		ch: ch,
+		q:        q,
+		ch:       ch,
+		exchange: conf.NotifyExchange,
 	}
 }
 

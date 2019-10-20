@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Addr            string
 	NotifyQueue     string
+	NotifyExchange  string
 	ConnectionDelay time.Duration
 	ConnectionTry   int
 }
@@ -39,6 +40,9 @@ func main() {
 		nil,                // arguments
 	)
 	failOnError(err, "Failed to declare a queue")
+
+	err = ch.QueueBind(config.NotifyQueue, "", config.NotifyExchange, false, nil)
+	failOnError(err, "Failed to bind a queue")
 
 	msgs, err := ch.Consume(
 		q.Name, // queue

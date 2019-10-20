@@ -1,6 +1,7 @@
 AMQP:
   Addr: "amqp://guest:guest@queue:5672/"
   NotifyQueue: "notify"
+  NotifyExchange: "notifyExchange"
   ConnectionDelay: 10
   ConnectionTry: 3
 DB: "postgres://mshev:123@postgres:5432/calendar?sslmode=disable"

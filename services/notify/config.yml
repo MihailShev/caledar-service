@@ -1,4 +1,5 @@
 Addr: "amqp://guest:guest@queue:5672/"
 NotifyQueue: "notify"
+NotifyExchange: "notifyExchange"
 ConnectionDelay: 10
 ConnectionTry: 3
