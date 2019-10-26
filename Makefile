@@ -1,7 +1,7 @@
-.PHONY: get test
+.PHONY: gen test
 
 gen:
-	protoc --proto_path services/api/internal/grpc --go_out=plugins=grpc:services/api/internal/grpc calendar.proto
+	protoc --proto_path pkg/grpc --go_out=plugins=grpc:pkg/grpc calendar.proto
 test:
 	set -e;\
 	docker-compose -f docker-compose.test.yml up -d;\

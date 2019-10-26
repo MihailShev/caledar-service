@@ -67,6 +67,11 @@ func main() {
 	}
 }
 
+func (s *calendarServer) CheckService(ctx context.Context,
+	req *calendarpb.CheckReq) (*calendarpb.CheckRes, error) {
+	return &calendarpb.CheckRes{Error: ""}, nil
+}
+
 func (s *calendarServer) CreateEvent(ctx context.Context,
 	req *calendarpb.CreateEventReq) (*calendarpb.CreateEventRes, error) {
 

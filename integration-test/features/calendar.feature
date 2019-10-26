@@ -5,8 +5,8 @@ Feature: Calendar service
     And I need to able to get created event and update it
 
     Scenario: Create event
-        When I create calendar client
-        Then I send message create event with params:
+        Given API is ready in "10" seconds
+        When I send message create event with params:
         """
         {
             "Title": "Test event",
@@ -17,8 +17,8 @@ Feature: Calendar service
             "UserId": 2
         }
         """
-       And The response error should be empty
-       And I received notify message with created event
+       Then The response error should be empty
+       And I received notify message with created event in "10" seconds
 
     Scenario: Get event
         When I send message get event

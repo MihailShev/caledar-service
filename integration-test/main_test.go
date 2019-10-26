@@ -9,8 +9,8 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	fmt.Println("Waiting all services start")
-	wait(10)
+	//fmt.Println("Waiting all services start")
+	//wait(10)
 	//time.Sleep(10 * time.Second)
 	status := godog.RunWithOptions("integration", func(s *godog.Suite) {
 		FeatureContext(s)

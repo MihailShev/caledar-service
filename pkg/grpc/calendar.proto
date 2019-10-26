@@ -5,6 +5,7 @@ package calendarpb;
 import "google/protobuf/timestamp.proto";
 
 service Calendar {
+    rpc CheckService(CheckReq) returns (CheckRes);
     rpc CreateEvent (CreateEventReq) returns (CreateEventRes);
     rpc GetEvent (GetEventReq) returns (GetEventRes);
     rpc UpdateEvent (UpdateEventReq) returns (UpdateEventRes);
@@ -19,6 +20,14 @@ message Event {
     string description = 6;
     uint64 userId = 7;
 
+}
+
+message CheckReq {
+
+}
+
+message CheckRes {
+    string error = 1;
 }
 
 message CreateEventReq {

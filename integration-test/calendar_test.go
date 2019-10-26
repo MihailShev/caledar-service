@@ -33,6 +33,7 @@ type CalendarTest struct {
 	getEventRes    calendarpb.GetEventRes
 	updateEventRes calendarpb.UpdateEventRes
 	client         calendarpb.CalendarClient
+	grpcClientConn *grpc.ClientConn
 	amqpConn       *amqp.Connection
 	ampqCh         *amqp.Channel
 	notifyMessage  []byte
@@ -45,15 +46,65 @@ func panicOnErr(err error) {
 	}
 }
 
-func (test *CalendarTest) beforeFeature(f *gherkin.Feature) {
+func (test *CalendarTest) aPIIsReadyInSeconds(duration int) error {
+	fmt.Printf("wait api is ready in %d seconds \n", duration)
+	wait(uint(duration))
+
+	err := test.connectToServer()
+
+	if err != nil {
+		return err
+	}
+
+	err = test.startReadNotifyQueue()
+
+	return nil
+}
+
+func (test *CalendarTest) connectToServer() error {
+	// check grpc server
+	cc, err := grpc.Dial("server:50051", grpc.WithInsecure())
+
+	if err != nil {
+		return err
+	}
+
+	client := calendarpb.NewCalendarClient(cc)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 400*time.Millisecond)
+	defer cancel()
+
+	res, err := client.CheckService(ctx, &calendarpb.CheckReq{})
+
+	if err != nil {
+		return nil
+	}
+
+	if res.GetError() != "" {
+		return fmt.Errorf(res.GetError())
+	}
+
+	test.client = client
+	test.grpcClientConn = cc
+
+	return nil
+}
+
+func (test *CalendarTest) startReadNotifyQueue() error {
 	test.stopSignal = make(chan struct{})
 
 	var err error
 	test.amqpConn, err = amqp.Dial("amqp://guest:guest@queue:5672/")
-	panicOnErr(err)
+
+	if err != nil {
+		return err
+	}
 
 	test.ampqCh, err = test.amqpConn.Channel()
-	panicOnErr(err)
+
+	if err != nil {
+		return err
+	}
 
 	q, err := test.ampqCh.QueueDeclare(
 		"notify_test", // name
@@ -63,10 +114,23 @@ func (test *CalendarTest) beforeFeature(f *gherkin.Feature) {
 		false,         // no-wait
 		nil,           // arguments
 	)
-	panicOnErr(err)
+
+	if err != nil {
+		return err
+	}
+
+	err = test.ampqCh.ExchangeDeclare("notifyExchange",
+		"direct", true, false, false, false, nil)
+
+	if err != nil {
+		return err
+	}
 
 	err = test.ampqCh.QueueBind("notify_test", "", "notifyExchange", false, nil)
-	panicOnErr(err)
+
+	if err != nil {
+		return err
+	}
 
 	msgs, err := test.ampqCh.Consume(
 		q.Name, // queue
@@ -77,7 +141,10 @@ func (test *CalendarTest) beforeFeature(f *gherkin.Feature) {
 		false,  // no-wait
 		nil,    // args
 	)
-	panicOnErr(err)
+
+	if err != nil {
+		return err
+	}
 
 	go func(stop chan struct{}) {
 		for {
@@ -89,6 +156,8 @@ func (test *CalendarTest) beforeFeature(f *gherkin.Feature) {
 			}
 		}
 	}(test.stopSignal)
+
+	return nil
 }
 
 func (test *CalendarTest) afterFeature(feature *gherkin.Feature) {
@@ -99,18 +168,9 @@ func (test *CalendarTest) afterFeature(feature *gherkin.Feature) {
 
 	err = test.amqpConn.Close()
 	panicOnErr(err)
-}
 
-func (test *CalendarTest) iCreateCalendarClient() error {
-	cc, err := grpc.Dial("server:50051", grpc.WithInsecure())
-
-	if err != nil {
-		return err
-	}
-
-	test.client = calendarpb.NewCalendarClient(cc)
-
-	return err
+	err = test.grpcClientConn.Close()
+	panicOnErr(err)
 }
 
 func (test *CalendarTest) iSendMessageCreateEventWithData(data *gherkin.DocString) error {
@@ -236,9 +296,9 @@ func (test *CalendarTest) eventTitleMatch(newTitle string) error {
 	return nil
 }
 
-func (test *CalendarTest) iReceivedNotifyMessageWithCreatedEvent() error {
+func (test *CalendarTest) iReceivedNotifyMessageWithCreatedEventInSeconds(duration int) error {
 	fmt.Println("Waiting 10 seconds for the scanner publish notify message.")
-	wait(10)
+	wait(uint(duration))
 
 	var event = struct {
 		UUID int64
@@ -259,13 +319,13 @@ func (test *CalendarTest) iReceivedNotifyMessageWithCreatedEvent() error {
 
 func FeatureContext(s *godog.Suite) {
 	test := CalendarTest{}
-	s.BeforeFeature(test.beforeFeature)
 
 	//  Scenario: Create event
-	s.Step(`^I create calendar client$`, test.iCreateCalendarClient)
+	s.Step(`^API is ready in "([^"]*)" seconds$`, test.aPIIsReadyInSeconds)
 	s.Step(`^I send message create event with params:$`, test.iSendMessageCreateEventWithData)
 	s.Step(`^The response error should be empty$`, test.theResponseErrorShouldBeEmpty)
-	s.Step(`^I received notify message with created event$`, test.iReceivedNotifyMessageWithCreatedEvent)
+	s.Step(`^I received notify message with created event in "([^"]*)" seconds$`,
+		test.iReceivedNotifyMessageWithCreatedEventInSeconds)
 
 	// Scenario Get event
 	s.Step(`^I send message get event$`, test.iSendMessageGetEvent)
