@@ -1,2 +1,3 @@
-DNS: "postgres://mshev:123@postgres:5432/calendar?sslmode=disable"
-GRPC: "server:50051"
+DNS: "postgres://mshev:123@localhost:5433/calendar?sslmode=disable"
+GRPC: ":50051"
+Monitoring: ":9091"

@@ -8,6 +8,8 @@ import (
 	"github.com/MihailShev/calendar-service/services/api/internal/calendar"
 	"github.com/MihailShev/calendar-service/services/api/internal/db"
 	"github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	_ "github.com/jackc/pgx"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
@@ -22,14 +24,15 @@ type calendarServer struct {
 }
 
 type Config struct {
-	DNS  string
-	GRPC string
+	DNS        string
+	GRPC       string
+	Monitoring string
 }
 
 func main() {
 	logger := grpclog.NewLoggerV2(os.Stdout, os.Stderr, os.Stderr)
 	var config = Config{}
-	err := conf.Read("./", &config)
+	err := conf.Read("../", &config)
 
 	if err != nil {
 		logger.Fatal(err)
@@ -54,7 +57,15 @@ func main() {
 		logger.Fatalf("failed to listen %v", err)
 	}
 
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(interceptorWithLogger(logger)))
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(
+		grpc_middleware.ChainUnaryServer(
+			interceptorWithLogger(logger),
+			grpc_prometheus.UnaryServerInterceptor,
+		),
+	))
+
+	go enableMonitoring(grpcServer, config.Monitoring, logger)
+
 	reflection.Register(grpcServer)
 	calendarpb.RegisterCalendarServer(grpcServer, &server)
 

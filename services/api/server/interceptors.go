@@ -21,7 +21,6 @@ func interceptorWithLogger(logger grpclog.LoggerV2) grpc.UnaryServerInterceptor 
 			info.FullMethod,
 			time.Since(start),
 			err)
-
 		return h, err
 	}
 }

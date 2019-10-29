@@ -4,13 +4,13 @@ volumes:
   pg-data:
 
 services:
-  server:
-    depends_on:
-      - postgres
-    container_name: server
-    image: mshev/calendar-server:3
-    ports:
-      - "50051:50051"
+#  server:
+#    depends_on:
+#      - postgres
+#    container_name: server
+#    image: mshev/calendar-server:3
+#    ports:
+#      - "50051:50051"
 
   postgres:
     container_name: postgres
