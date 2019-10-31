@@ -1,9 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"github.com/MihailShev/calendar-service/pkg/config"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/streadway/amqp"
 	"log"
+	"net/http"
 	"time"
 )
 
@@ -13,6 +17,7 @@ type Config struct {
 	NotifyExchange  string
 	ConnectionDelay time.Duration
 	ConnectionTry   int
+	Monitoring      string
 }
 
 func main() {
@@ -57,10 +62,40 @@ func main() {
 
 	forever := make(chan bool)
 
+	notifyMetric := prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace:   "calendar_service",
+		Subsystem:   "notify",
+		Name:        "rps",
+		Help:        "notify per second",
+	})
+
+	prometheus.MustRegister(notifyMetric)
+	var rps float64 = 0
+		notifyMetric.Set(0)
+	go func() {
+		ticker := time.NewTicker(1 * time.Second)
+		for {
+			//notifyMetric.SetToCurrentTime()
+			notifyMetric.Set(rps)
+
+			//notifyMetric.Sub(rps)
+			//notifyMetric.Set(rps)
+			fmt.Println(rps)
+			rps = 0
+			<-ticker.C
+		}
+	}()
+
 	go func() {
 		for d := range msgs {
+			rps++
 			notify(d.Body)
 		}
+	}()
+
+	go func() {
+		err := http.ListenAndServe(config.Monitoring, promhttp.Handler())
+		log.Println(err)
 	}()
 
 	log.Printf(" [*] Waiting for messages.")
@@ -77,8 +112,8 @@ func connect(config Config) (*amqp.Connection, error) {
 
 		log.Println("Trying connect to queue broker", connectionTry)
 
-		conn, err = amqp.Dial(config.Addr)
-
+		//conn, err = amqp.Dial(config.Addr)
+		conn, err = amqp.Dial("amqp://guest:guest@localhost:5673/")
 		if err == nil {
 			log.Println("Connect to queue broker is established")
 			break
