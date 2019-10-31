@@ -41,6 +41,10 @@ func main() {
 	)
 	failOnError(err, "Failed to declare a queue")
 
+	err = ch.ExchangeDeclare(config.NotifyExchange,
+		"direct", true, false, false, false, nil)
+	failOnError(err, "Failed to declare an exchange")
+
 	err = ch.QueueBind(config.NotifyQueue, "", config.NotifyExchange, false, nil)
 	failOnError(err, "Failed to bind a queue")
 

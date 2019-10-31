@@ -32,7 +32,7 @@ services:
     depends_on:
       - queue
     container_name: notify
-    image: mshev/calendar-notify:3
+    image: mshev/calendar-notify:4
 
   queue:
     container_name: rabbit
