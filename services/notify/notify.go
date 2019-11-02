@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/MihailShev/calendar-service/pkg/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -61,35 +60,12 @@ func main() {
 	failOnError(err, "Failed to register a consumer")
 
 	forever := make(chan bool)
-
-	notifyMetric := prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace:   "calendar_service",
-		Subsystem:   "notify",
-		Name:        "rps",
-		Help:        "notify per second",
-	})
-
-	prometheus.MustRegister(notifyMetric)
-	var rps float64 = 0
-		notifyMetric.Set(0)
-	go func() {
-		ticker := time.NewTicker(1 * time.Second)
-		for {
-			//notifyMetric.SetToCurrentTime()
-			notifyMetric.Set(rps)
-
-			//notifyMetric.Sub(rps)
-			//notifyMetric.Set(rps)
-			fmt.Println(rps)
-			rps = 0
-			<-ticker.C
-		}
-	}()
+	messagesCounter := monitoring()
 
 	go func() {
 		for d := range msgs {
-			rps++
 			notify(d.Body)
+			messagesCounter.Inc()
 		}
 	}()
 
@@ -102,6 +78,19 @@ func main() {
 	<-forever
 }
 
+func monitoring() prometheus.Counter {
+	notifyMetric := prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: "calendar_service",
+		Subsystem: "notify",
+		Name:      "rps",
+		Help:      "send notify messages per second",
+	})
+
+	prometheus.MustRegister(notifyMetric)
+
+	return notifyMetric
+}
+
 func connect(config Config) (*amqp.Connection, error) {
 	connectionTry := 0
 	var conn *amqp.Connection
@@ -112,8 +101,8 @@ func connect(config Config) (*amqp.Connection, error) {
 
 		log.Println("Trying connect to queue broker", connectionTry)
 
-		//conn, err = amqp.Dial(config.Addr)
-		conn, err = amqp.Dial("amqp://guest:guest@localhost:5673/")
+		conn, err = amqp.Dial(config.Addr)
+
 		if err == nil {
 			log.Println("Connect to queue broker is established")
 			break

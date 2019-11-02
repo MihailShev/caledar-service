@@ -2,19 +2,14 @@ version: '3'
 
 services:
   postgres_exporter:
-    image: mshev/calendar-pg-exp:1
+    image: mshev/calendar-pg_exporter:2
     environment:
       DATA_SOURCE_NAME: "postgres://mshev:123@localhost:5433/calendar?sslmode=disable"
       PG_EXPORTER_DISABLE_DEFAULT_METRICS: "true"
       PG_EXPORTER_DISABLE_SETTINGS_METRICS: "true"
       PG_EXPORTER_EXTEND_QUERY_PATH: "./config/queries.yaml"
-    ports:
-      - "9187:9187"
     network_mode: "host"
 
   monitoring:
     image: mshev/calendar-monitoring:1
-    ports:
-      - "9090:9090"
     network_mode: "host"
-

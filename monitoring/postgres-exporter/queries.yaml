@@ -5,5 +5,5 @@ pg_stat_user_tables:
           usage: "LABEL"
           description: "Name of database"
     - event_count:
-        usage: "GAUGE"
+        usage: "COUNTER"
         description: "Count of events"

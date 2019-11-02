@@ -32,7 +32,7 @@ type Config struct {
 func main() {
 	logger := grpclog.NewLoggerV2(os.Stdout, os.Stderr, os.Stderr)
 	var config = Config{}
-	err := conf.Read("../", &config)
+	err := conf.Read("./", &config)
 
 	if err != nil {
 		logger.Fatal(err)
