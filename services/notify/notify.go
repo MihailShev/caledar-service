@@ -2,8 +2,11 @@ package main
 
 import (
 	"github.com/MihailShev/calendar-service/pkg/config"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/streadway/amqp"
 	"log"
+	"net/http"
 	"time"
 )
 
@@ -13,6 +16,7 @@ type Config struct {
 	NotifyExchange  string
 	ConnectionDelay time.Duration
 	ConnectionTry   int
+	Monitoring      string
 }
 
 func main() {
@@ -56,15 +60,35 @@ func main() {
 	failOnError(err, "Failed to register a consumer")
 
 	forever := make(chan bool)
+	messagesCounter := monitoring()
 
 	go func() {
 		for d := range msgs {
 			notify(d.Body)
+			messagesCounter.Inc()
 		}
+	}()
+
+	go func() {
+		err := http.ListenAndServe(config.Monitoring, promhttp.Handler())
+		log.Println(err)
 	}()
 
 	log.Printf(" [*] Waiting for messages.")
 	<-forever
+}
+
+func monitoring() prometheus.Counter {
+	notifyMetric := prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: "calendar_service",
+		Subsystem: "notify",
+		Name:      "rps",
+		Help:      "send notify messages per second",
+	})
+
+	prometheus.MustRegister(notifyMetric)
+
+	return notifyMetric
 }
 
 func connect(config Config) (*amqp.Connection, error) {

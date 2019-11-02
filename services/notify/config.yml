@@ -3,3 +3,4 @@ NotifyQueue: "notify"
 NotifyExchange: "notifyExchange"
 ConnectionDelay: 10
 ConnectionTry: 3
+Monitoring: "notify:9092"

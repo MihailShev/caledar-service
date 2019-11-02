@@ -9,7 +9,7 @@ services:
     depends_on:
       - postgres
     container_name: server-test
-    image: mshev/calendar-server:3
+    image: mshev/calendar-server:4
     ports:
       - "50051:50051"
 
@@ -32,7 +32,7 @@ services:
     depends_on:
       - queue
     container_name: notify-test
-    image: mshev/calendar-notify:3
+    image: mshev/calendar-notify:6
 
   queue:
     container_name: rabbit-test
